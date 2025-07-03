@@ -1,2 +1,2 @@
 # ZebraPRJ
-Some test project for Jenkins, Docker
+REST service integrated with Docker and Jenkins
