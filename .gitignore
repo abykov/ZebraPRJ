@@ -1,3 +1,26 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Maven
+target/
+*.log
+.mvn/
+mvnw
+mvnw.cmd
+
+# Docker
+*.dockerignore
+docker-compose.yml
+
+# MacOS
+.DS_Store
+
+# Spring Boot
+*.pid
+*.seed
+*.log
+
 # Compiled class file
 *.class
 
