@@ -19,7 +19,6 @@ docker-compose.yml
 # Spring Boot
 *.pid
 *.seed
-*.log
 
 # Compiled class file
 *.class
