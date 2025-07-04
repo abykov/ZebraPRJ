@@ -1,2 +1,2 @@
 # ZebraPRJ
-REST service integrated with Docker and Jenkins
+REST service integrated with Docker and Jenkins.
