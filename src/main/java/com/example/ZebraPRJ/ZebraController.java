@@ -17,6 +17,6 @@ public class ZebraController {
             @ApiResponse (responseCode = "500", description = "=( Internal server error =(")
     })
     public String sayHello(){
-        return "Hello";
+        return "Hello\n";
     }
 }
