@@ -14,7 +14,7 @@ public class ZebraController {
     @Operation(summary = "Get Hello message", description = "Return simple hardcoded message 'Hello'")
     @ApiResponses(value = {
             @ApiResponse (responseCode = "200", description = "Successfully retrieved greeting"),
-            @ApiResponse (responseCode = "500", description = "=( nternal server error =(")
+            @ApiResponse (responseCode = "500", description = "=( Internal server error =(")
     })
     public String sayHello(){
         return "Hello";
