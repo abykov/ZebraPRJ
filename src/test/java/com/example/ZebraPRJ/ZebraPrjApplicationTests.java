@@ -1,13 +1,13 @@
 package com.example.ZebraPRJ;
 
-import org.junit.jupiter.api.Test;
+import org.testng.annotations.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class ZebraPrjApplicationTests {
+public class ZebraPrjApplicationTests {
 
-	@Test
-	void contextLoads() {
+	@Test (description = "Check that Spring context loads successfully")
+	public void contextLoads() {
 	}
 
 }

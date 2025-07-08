@@ -3,6 +3,7 @@
     <test name="API Tests">
         <classes>
             <class name="com.example.ZebraPRJ.ZebraPrjControllerTest"/>
+            <class name="com.example.ZebraPRJ.ZebraPrjApplicationTests"/>
         </classes>
     </test>
 </suite>
