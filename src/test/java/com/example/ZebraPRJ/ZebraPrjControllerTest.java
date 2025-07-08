@@ -1,50 +1,70 @@
 package com.example.ZebraPRJ;
 
-import io.restassured.RestAssured;
-import org.testng.annotations.BeforeClass;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.annotations.Test;
 
-import static io.restassured.RestAssured.given;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.lessThan;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-public class ZebraPrjControllerTest {
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@TestExecutionListeners(listeners = {
+        DependencyInjectionTestExecutionListener.class
+})
+public class ZebraPrjControllerTest extends AbstractTestNGSpringContextTests {
 
-    @BeforeClass
-    public void setUp(){
-        //Указываем базовый URL для тестов
-        RestAssured.baseURI = "http://localhost:8081";
-    }
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    private final String helloEndpoint = "/hello";
+    private final String invalidEndpoint = "/invalid";
+    private final String helloBody = "Hello";
 
     @Test (description = "Check GET /hello returns 200 and 'Hello'",
             groups = "Positive")
     public void testGetHelloSuccess(){
-        given()
-                .when()
-                .get("/hello")
-                .then()
-                .statusCode(200)
-                .body(equalTo("Hello"));
+        ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
+        assertThat(response.getStatusCode().value(), equalTo(200));
+        assertThat(response.getBody(), equalTo(helloBody));
     }
 
     @Test (description = "Check Content-Type for GET /hello",
             groups = "Positive")
     public void testGetHelloContentType(){
-        given()
-                .when()
-                .get("/hello")
-                .then()
-                .statusCode(200)
-                .header("Content-Type", "text/plain;charset=UTF-8");
+        ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
+        assertThat(response.getStatusCode().value(), equalTo(200));
+        assertThat(response.getHeaders().getContentType().toString(), equalTo("text/plain;charset=UTF-8"));
+    }
+
+    @Test (description = "Check response time for GET /hello",
+            groups = "Positive")
+    public void testGetHelloResponseTime(){
+        long startTime = System.currentTimeMillis();
+        ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        assertThat(response.getStatusCode().value(), equalTo(200));
+        assertThat(elapsedTime, lessThan(1000L));
     }
 
     @Test (description = "Check GET /invalid returns 404",
             groups = "Negative")
     public void testGetInvalidEndpoint(){
-        given()
-                .when()
-                .get("/invalid")
-                .then()
-                .statusCode(404);
+        ResponseEntity<String> response = restTemplate.getForEntity(invalidEndpoint, String.class);
+        assertThat(response.getStatusCode().value(), equalTo(404));
+    }
+
+    @Test (description = "Check POST /hello returns 405",
+            groups = "Negative")
+    public void testPostHelloMethodNotAllowed(){
+        ResponseEntity<String> response = restTemplate.postForEntity(helloEndpoint, null, String.class);
+        assertThat(response.getStatusCode().value(), equalTo(405));
     }
 
 
