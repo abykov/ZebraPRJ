@@ -17,13 +17,30 @@ pipeline {
     stages {
         stage('Setup') {
             steps {
-                sh '''
-                   echo "=== Проверка окружения ==="
-                   ls -la /var/run/docker.sock
-                   which docker
-                   docker --version
-                '''
-            }
+                            sh '''
+                                echo "=== Проверка окружения ==="
+                                echo "1. Проверка Docker сокета:"
+                                ls -la /var/run/docker.sock
+
+                                echo "2. Проверка доступа к Docker:"
+                                if [ -S "/var/run/docker.sock" ]; then
+                                    echo "Docker socket доступен"
+                                    echo "3. Проверка версии Docker:"
+                                    docker --version
+                                    echo "4. Проверка расположения Docker:"
+                                    ls -la /usr/bin/docker
+                                else
+                                    echo "ERROR: Docker socket не найден!"
+                                    exit 1
+                                fi
+
+                                echo "5. Проверка Java:"
+                                java -version
+
+                                echo "6. Проверка Maven:"
+                                mvn -v
+                            '''
+                        }
         }
 
         // ====================== ПОДГОТОВКА ======================
