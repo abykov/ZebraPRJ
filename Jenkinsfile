@@ -15,6 +15,17 @@ pipeline {
     }
 
     stages {
+        stage('Setup') {
+            steps {
+                sh '''
+                   echo "=== Проверка окружения ==="
+                   ls -la /var/run/docker.sock
+                   which docker
+                   docker --version
+                '''
+            }
+        }
+
         // ====================== ПОДГОТОВКА ======================
         stage('Checkout') {
             steps {
