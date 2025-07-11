@@ -49,7 +49,7 @@ pipeline {
                                 echo "=== Проверка окружения ==="
                                 echo "1. JAVA_HOME: $JAVA_HOME"
                                 java -version
-                                mvn -v
+
                             '''
                         }
         }
