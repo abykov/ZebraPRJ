@@ -21,24 +21,35 @@ pipeline {
                             sh '''
                                 echo "=== Проверка окружения ==="
                                 echo "1. Проверка Docker сокета:"
-                                ls -la /var/run/docker.sock
-
-                                echo "2. Проверка доступа к Docker:"
                                 if [ -S "/var/run/docker.sock" ]; then
                                     echo "Docker socket доступен"
-                                    echo "3. Проверка версии Docker:"
-                                    ''' + "${DOCKER_PATH}" + ''' --version
-                                    echo "4. Проверка расположения Docker:"
-                                    ls -la /usr/bin/docker
+                                    echo "2. Проверка версии Docker:"
+                                    if ! docker --version > /dev/null 2>&1; then
+                                        echo "ERROR: Не удалось определить версию Docker!"
+                                        exit 1
+                                    fi
+                                    docker --version
+                                    echo "3. Проверка расположения Docker:"
+                                    if [ -x "/usr/bin/docker" ]; then
+                                        ls -la /usr/bin/docker
+                                    else
+                                        echo "ERROR: Docker не найден в /usr/bin/docker!"
+                                    fi
                                 else
                                     echo "ERROR: Docker socket не найден!"
                                     exit 1
                                 fi
-
-                                echo "5. Проверка Java:"
+                                echo "4. Проверка Java:"
+                                if ! java -version > /dev/null 2>&1; then
+                                    echo "ERROR: Java не установлена или недоступна!"
+                                    exit 1
+                                fi
                                 java -version
-
-                                echo "6. Проверка Maven:"
+                                echo "5. Проверка Maven:"
+                                if ! mvn -v > /dev/null 2>&1; then
+                                    echo "ERROR: Maven не установлен или недоступен!"
+                                    exit 1
+                                fi
                                 mvn -v
                             '''
                         }
