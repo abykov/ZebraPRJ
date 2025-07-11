@@ -41,6 +41,7 @@ pipeline {
                                 fi
                                 java -version
                                 echo "5. Проверка Maven:"
+                                mvn -v
                                 if ! mvn -v > /dev/null 2>&1; then
                                     echo "ERROR: Maven не установлен или недоступен!"
                                     exit 1
