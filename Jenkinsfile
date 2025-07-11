@@ -8,10 +8,11 @@ pipeline {
     }
 
     environment {
-        DOCKER_IMAGE = 'zebra-prj'       // Название Docker образа
-        DOCKER_TAG = "${env.BUILD_ID}"   // Тег образа (по номеру сборки)
-        CONTAINER_NAME = 'zebra-prj'     // Имя контейнера
-        APP_PORT = '8081'                // Порт приложения
+        DOCKER_IMAGE = 'zebra-prj'           // Название Docker образа
+        DOCKER_TAG = "${env.BUILD_ID}"       // Тег образа (по номеру сборки)
+        CONTAINER_NAME = 'zebra-prj'         // Имя контейнера
+        APP_PORT = '8081'                    // Порт приложения
+        DOCKER_PATH = '/usr/local/bin/docker' // Для MacOS явно указываем путь к Docker
     }
 
     stages {
@@ -60,6 +61,12 @@ pipeline {
 
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
+             agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
             steps {
                 // Запускаем только тесты (без сборки)
                 sh 'mvn test surefire-report:report'
@@ -81,6 +88,12 @@ pipeline {
 
         // ====================== СБОРКА ======================
         stage('Build') {
+            agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
             steps {
                 // Собираем проект, пропуская тесты (они уже выполнены)
                 sh 'mvn clean package -DskipTests'
@@ -93,38 +106,33 @@ pipeline {
         // ====================== СОЗДАНИЕ DOCKER ОБРАЗА ======================
         stage('Build Docker Image') {
             steps {
-                script {
                     // Собираем Docker образ с двумя тегами
                     sh """
                         echo "=== Building Docker image ==="
-                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+                        ${DOCKER_PATH} build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                        ${DOCKER_PATH} tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
                         echo "Image built: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     """
-                }
             }
         }
 
         // ====================== ДЕПЛОЙ ======================
         stage('Deploy') {
             steps {
-                script {
                     // Останавливаем и удаляем старый контейнер (если есть)
                     sh """
                         echo "=== Stopping old container ==="
-                        docker stop ${CONTAINER_NAME} || true
-                        docker rm ${CONTAINER_NAME} || true
+                        ${DOCKER_PATH}  stop ${CONTAINER_NAME} || true
+                        ${DOCKER_PATH}  rm ${CONTAINER_NAME} || true
                     """
 
                     // Запускаем новый контейнер
                     sh """
                         echo "=== Starting new container ==="
-                        docker run -d \\
+                        ${DOCKER_PATH}  run -d \\
                             -p ${APP_PORT}:${APP_PORT} \\
                             --name ${CONTAINER_NAME} \\
                             ${DOCKER_IMAGE}:latest
-                    """
-                }
             }
         }
 
