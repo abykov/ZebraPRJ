@@ -24,6 +24,7 @@ pipeline {
                                 if [ -S "/var/run/docker.sock" ]; then
                                     echo "Docker socket доступен"
                                     echo "2. Проверка версии Docker:"
+                                    docker --version
                                     if ! docker --version > /dev/null 2>&1; then
                                         echo "ERROR: Не удалось определить версию Docker!"
                                         exit 1
