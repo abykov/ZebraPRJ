@@ -27,7 +27,7 @@ pipeline {
                                 if [ -S "/var/run/docker.sock" ]; then
                                     echo "Docker socket доступен"
                                     echo "3. Проверка версии Docker:"
-                                    docker --version
+                                    ''' + "${DOCKER_PATH}" + '''--version
                                     echo "4. Проверка расположения Docker:"
                                     ls -la /usr/bin/docker
                                 else
@@ -108,7 +108,7 @@ pipeline {
             steps {
                     // Собираем Docker образ с двумя тегами
                     sh """
-                        echo "=== Building Docker image ==="
+                        echo \\"=== Building Docker image ===\\"
                         ${DOCKER_PATH} build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                         ${DOCKER_PATH} tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
                         echo "Image built: ${DOCKER_IMAGE}:${DOCKER_TAG}"
