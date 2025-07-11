@@ -41,12 +41,14 @@ pipeline {
                                 fi
                                 java -version
                                 echo "5. Проверка Maven:"
-                                mvn -v
-                                if ! mvn -v > /dev/null 2>&1; then
-                                    echo "ERROR: Maven не установлен или недоступен!"
-                                    exit 1
-                                fi
-                                mvn -v
+                                echo "=== Установка переменных окружения ==="
+                                export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+                                export PATH=$JAVA_HOME/bin:$PATH
+
+                                echo "=== Проверка окружения ==="
+                                echo "1. JAVA_HOME: $JAVA_HOME"
+                                java -version
+                                mvn -v || { echo "Maven check failed"; exit 1; }
                             '''
                         }
         }
