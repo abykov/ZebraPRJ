@@ -128,11 +128,12 @@ pipeline {
 
                     // Запускаем новый контейнер
                     sh """
-                        echo ""=== Starting new container ===""
+                        echo "=== Starting new container ==="
                         ${DOCKER_PATH}  run -d \\
                             -p ${APP_PORT}:${APP_PORT} \\
                             --name ${CONTAINER_NAME} \\
                             ${DOCKER_IMAGE}:latest
+                    """
             }
         }
 
@@ -144,14 +145,14 @@ pipeline {
 
                 // Проверяем статус контейнера и доступность эндпоинтов
                 sh """
-                    echo "=== Container status ==="
+                    echo \\"=== Container status ===\\"
                     docker ps --filter name=${CONTAINER_NAME}
 
-                    echo "=== Testing /hello endpoint ==="
-                    curl -f http://localhost:${APP_PORT}/hello || echo "Service not responding"
+                    echo \\"=== Testing /hello endpoint ===\\"
+                    curl -f http://localhost:${APP_PORT}/hello || echo \\"Service not responding\\"
 
-                    echo "=== Testing Swagger UI ==="
-                    curl -f http://localhost:${APP_PORT}/swagger-ui.html || echo "Swagger UI not accessible"
+                    echo \\"=== Testing Swagger UI ===\\"
+                    curl -f http://localhost:${APP_PORT}/swagger-ui.html || echo \\"Swagger UI not accessible\\"
                 """
             }
         }
