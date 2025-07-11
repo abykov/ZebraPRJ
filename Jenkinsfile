@@ -42,7 +42,8 @@ pipeline {
                                 java -version
                                 echo "5. Проверка Maven:"
                                 echo "=== Установка переменных окружения ==="
-                                export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+                                export JAVA_HOME=/opt/java/openjdk  # Правильный путь для этого контейнера
                                 export PATH=$JAVA_HOME/bin:$PATH
 
                                 echo "=== Проверка окружения ==="
