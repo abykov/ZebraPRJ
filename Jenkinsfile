@@ -108,7 +108,7 @@ pipeline {
             steps {
                     // Собираем Docker образ с двумя тегами
                     sh """
-                        echo \\"=== Building Docker image ===\\"
+                        echo "=== Building Docker image ==="
                         ${DOCKER_PATH} build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                         ${DOCKER_PATH} tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
                         echo "Image built: ${DOCKER_IMAGE}:${DOCKER_TAG}"
