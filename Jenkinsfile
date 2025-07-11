@@ -1,11 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.8.3-openjdk-17'
-            // Монтируем Docker сокет и бинарник для работы с Docker внутри контейнера
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/local/bin/docker:/usr/bin/docker -v $HOME/.m2:/root/.m2'
-        }
-    }
+    agent any
 
     environment {
         DOCKER_IMAGE = 'zebra-prj'           // Название Docker образа
