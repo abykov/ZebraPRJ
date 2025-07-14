@@ -49,6 +49,12 @@ pipeline {
                                 echo "Проверка symlinks:"
                                 ls -la /usr/bin/java /usr/bin/mvn
 
+                                echo "=== Информация о контейнере ==="
+                                cat /etc/os-release
+                                echo "JAVA_HOME: $JAVA_HOME"
+                                ls -la /usr/bin/java /usr/bin/mvn
+                                ls -d /usr/java/* /opt/java/* 2>/dev/null || echo "Java не найдена в стандартных путях"
+
                                 echo "5. Проверка Maven:"
                                 mvn -v
 
