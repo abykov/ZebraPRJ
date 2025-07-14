@@ -14,55 +14,19 @@ pipeline {
             steps {
                             sh '''
                                 echo "=== Проверка окружения ==="
-                                echo "1. Проверка Docker сокета:"
-                                if [ -S "/var/run/docker.sock" ]; then
-                                    echo "Docker socket доступен"
-                                    echo "2. Проверка версии Docker:"
-                                    docker --version
-                                    if ! docker --version > /dev/null 2>&1; then
-                                        echo "ERROR: Не удалось определить версию Docker!"
-                                        exit 1
-                                    fi
-                                    docker --version
-                                    echo "3. Проверка расположения Docker:"
-                                    if [ -x "/usr/bin/docker" ]; then
-                                        ls -la /usr/bin/docker
-                                    else
-                                        echo "ERROR: Docker не найден в /usr/bin/docker!"
-                                    fi
-                                else
-                                    echo "ERROR: Docker socket не найден!"
-                                    exit 1
-                                fi
-                                echo "4. Проверка Java:"
-                                echo "=== Установка переменных окружения ==="
+                                echo "1. Проверка Docker:"
+                                docker --version
+
+                                echo "2. Проверка Java:"
+                                echo "3. Установка переменных окружения ==="
 
                                 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
                                 export PATH=$JAVA_HOME/bin:$PATH
 
-                                ls -la /usr/java/openjdk-17/bin/java || echo "JAVA_HOME directory is invalid"
-
-                                if ! java -version > /dev/null 2>&1; then
-                                    echo "ERROR: Java не установлена или недоступна!"
-                                    exit 1
-                                fi
                                 java -version
 
-                                echo "Проверка symlinks:"
-                                ls -la /usr/bin/java /usr/bin/mvn
-
-                                echo "=== Информация о контейнере ==="
-                                cat /etc/os-release
-                                echo "JAVA_HOME: $JAVA_HOME"
-                                ls -la /usr/bin/java /usr/bin/mvn
-                                ls -d /usr/java/* /opt/java/* 2>/dev/null || echo "Java не найдена в стандартных путях"
-
-                                echo "5. Проверка Maven:"
+                                echo "4. Проверка Maven:"
                                 mvn -v
-
-
-
-
                             '''
                         }
         }
