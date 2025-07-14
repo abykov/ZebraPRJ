@@ -37,8 +37,9 @@ pipeline {
                                 echo "4. Проверка Java:"
                                 echo "=== Установка переменных окружения ==="
 
-                                export JAVA_HOME=/usr/java/openjdk-17  # Правильный путь для этого контейнера
+                                export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
                                 export PATH=$JAVA_HOME/bin:$PATH
+
                                 ls -la /usr/java/openjdk-17/bin/java || echo "JAVA_HOME directory is invalid"
 
                                 if ! java -version > /dev/null 2>&1; then
