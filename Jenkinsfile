@@ -45,6 +45,10 @@ pipeline {
                                     exit 1
                                 fi
                                 java -version
+
+                                echo "Проверка symlinks:"
+                                ls -la /usr/bin/java /usr/bin/mvn
+
                                 echo "5. Проверка Maven:"
                                 mvn -v
 
