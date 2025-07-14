@@ -39,7 +39,6 @@ pipeline {
 
                                 export JAVA_HOME=/usr/java/openjdk-17  # Правильный путь для этого контейнера
                                 export PATH=$JAVA_HOME/bin:$PATH
-
                                 ls -la /usr/java/openjdk-17/bin/java || echo "JAVA_HOME directory is invalid"
 
                                 if ! java -version > /dev/null 2>&1; then
