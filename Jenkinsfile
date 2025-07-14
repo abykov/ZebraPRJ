@@ -35,20 +35,21 @@ pipeline {
                                     exit 1
                                 fi
                                 echo "4. Проверка Java:"
+                                echo "=== Установка переменных окружения ==="
+
+                                export JAVA_HOME=/usr/java/openjdk-17  # Правильный путь для этого контейнера
+                                export PATH=$JAVA_HOME/bin:$PATH
+
                                 if ! java -version > /dev/null 2>&1; then
                                     echo "ERROR: Java не установлена или недоступна!"
                                     exit 1
                                 fi
                                 java -version
                                 echo "5. Проверка Maven:"
-                                echo "=== Установка переменных окружения ==="
+                                mvn -v
 
-                                export JAVA_HOME=/opt/java/openjdk  # Правильный путь для этого контейнера
-                                export PATH=$JAVA_HOME/bin:$PATH
 
-                                echo "=== Проверка окружения ==="
-                                echo "1. JAVA_HOME: $JAVA_HOME"
-                                java -version
+
 
                             '''
                         }
