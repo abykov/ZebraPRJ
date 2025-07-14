@@ -6,7 +6,7 @@ pipeline {
         DOCKER_TAG = "${env.BUILD_ID}"       // Тег образа (по номеру сборки)
         CONTAINER_NAME = 'zebra-prj'         // Имя контейнера
         APP_PORT = '8081'                    // Порт приложения
-        DOCKER_PATH = '/usr/local/bin/docker' // Для MacOS явно указываем путь к Docker
+        DOCKER_PATH = '/usr/bin/docker' // Для MacOS явно указываем путь к Docker
     }
 
     stages {
