@@ -7,6 +7,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
@@ -20,6 +21,7 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@ActiveProfiles("test")
 @TestExecutionListeners(listeners = {
         DependencyInjectionTestExecutionListener.class
 })
@@ -83,6 +85,8 @@ public class ZebraPrjControllerTest extends AbstractTestNGSpringContextTests {
                 new ParameterizedTypeReference<List<User>>() {}
         );
         assertThat(response.getStatusCode().value(), equalTo(200));
+        assertThat(response.getBody().size(), equalTo(2)); // Ожидаем 2 пользователя
+        assertThat(response.getBody().get(0).getName(), equalTo("Alice Smith"));
     }
 
 
