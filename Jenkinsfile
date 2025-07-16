@@ -88,6 +88,7 @@ pipeline {
             steps {
                 // Собираем проект, пропуская тесты (они уже выполнены)
                 sh 'mvn clean package -DskipTests'
+                echo "=== Checking JAR file on Build stage (1)==="
                 sh 'ls -l target/ZebraPRJ-0.0.1-SNAPSHOT.jar' // Проверка наличия JAR
 
                 // Архивируем собранный JAR-файл
@@ -100,6 +101,8 @@ pipeline {
             steps {
                     // Собираем Docker образ с двумя тегами
                     sh """
+                        echo "=== Checking JAR file on Build Docker Image stage(2)==="
+                        ls -l target/ZebraPRJ-0.0.1-SNAPSHOT.jar
                         echo "=== Building Docker image ==="
                         ${DOCKER_PATH} build --no-cache -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                         ${DOCKER_PATH} tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
