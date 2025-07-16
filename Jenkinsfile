@@ -1,11 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.8.3-openjdk-17'
-            // Монтируем Docker сокет и бинарник для работы с Docker внутри контейнера
-            args '-v /var/run/docker.sock:/var/run/docker.sock -v /usr/local/bin/docker:/usr/bin/docker -v $HOME/.m2:/root/.m2'
-        }
-    }
+    agent any
 
     environment {
         DOCKER_IMAGE = 'zebra-prj'       // Название Docker образа
@@ -21,25 +15,18 @@ pipeline {
             steps {
                             sh '''
                                 echo "=== Проверка окружения ==="
-                                echo "1. Проверка Docker сокета:"
-                                ls -la /var/run/docker.sock
+                                echo "1. Проверка Docker:"
+                                docker --version
 
-                                echo "2. Проверка доступа к Docker:"
-                                if [ -S "/var/run/docker.sock" ]; then
-                                    echo "Docker socket доступен"
-                                    echo "3. Проверка версии Docker:"
-                                    docker --version
-                                    echo "4. Проверка расположения Docker:"
-                                    ls -la /usr/bin/docker
-                                else
-                                    echo "ERROR: Docker socket не найден!"
-                                    exit 1
-                                fi
+                                echo "2. Проверка Java:"
+                                echo "3. Установка переменных окружения ==="
 
-                                echo "5. Проверка Java:"
+                                export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+                                export PATH=$JAVA_HOME/bin:$PATH
+
                                 java -version
 
-                                echo "6. Проверка Maven:"
+                                echo "4. Проверка Maven:"
                                 mvn -v
                             '''
                         }
@@ -62,6 +49,12 @@ pipeline {
 
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
+             agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
             steps {
                 // Запускаем только тесты (без сборки)
                 sh 'mvn test surefire-report:report'
@@ -83,6 +76,12 @@ pipeline {
 
         // ====================== СБОРКА ======================
         stage('Build') {
+            agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
             steps {
                 // Собираем проект, пропуская тесты (они уже выполнены)
                 sh 'mvn clean package -DskipTests'
@@ -95,7 +94,6 @@ pipeline {
         // ====================== СОЗДАНИЕ DOCKER ОБРАЗА ======================
         stage('Build Docker Image') {
             steps {
-                script {
                     // Собираем Docker образ с двумя тегами
                     sh """
                         echo "=== Building Docker image ==="
@@ -103,14 +101,12 @@ pipeline {
                         ${DOCKER_PATH} tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
                         echo "Image built: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     """
-                }
             }
         }
 
         // ====================== ДЕПЛОЙ ======================
         stage('Deploy') {
             steps {
-                script {
                     // Останавливаем и удаляем старый контейнер (если есть)
                     sh """
                         echo "=== Stopping old container ==="
@@ -121,14 +117,13 @@ pipeline {
                     // Запускаем новый контейнер
                     sh """
                         echo "=== Starting new container ==="
-                        docker run -d \\
+                        ${DOCKER_PATH}  run -d \\
                             -p ${APP_PORT}:${APP_PORT} \\
                             --name ${CONTAINER_NAME} \\
                             --network ${DOCKER_NETWORK} \\
                             -e SPRING_PROFILES_ACTIVE=docker \\
                             ${DOCKER_IMAGE}:latest
                     """
-                }
             }
         }
 
@@ -140,14 +135,14 @@ pipeline {
 
                 // Проверяем статус контейнера и доступность эндпоинтов
                 sh """
-                    echo "=== Container status ==="
-                    docker ps -f name=${CONTAINER_NAME}
+                    echo \\"=== Container status ===\\"
+                    docker ps --filter name=${CONTAINER_NAME}
 
-                    echo "=== Testing /hello endpoint ==="
-                    curl -f http://localhost:${APP_PORT}/hello || echo "Service not responding"
+                    echo \\"=== Testing /hello endpoint ===\\"
+                    curl -f http://localhost:${APP_PORT}/hello || echo \\"Service not responding\\"
 
-                    echo "=== Testing Swagger UI ==="
-                    curl -f http://localhost:${APP_PORT}/swagger-ui.html || echo "Swagger UI not accessible"
+                    echo \\"=== Testing Swagger UI ===\\"
+                    curl -f http://localhost:${APP_PORT}/swagger-ui.html || echo \\"Swagger UI not accessible\\"
                 """
             }
         }
