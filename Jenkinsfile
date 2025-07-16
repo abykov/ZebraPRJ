@@ -35,6 +35,9 @@ pipeline {
         // ====================== ПОДГОТОВКА ======================
         stage('Checkout') {
             steps {
+                // Очистка рабочей директории перед checkout
+                cleanWs()
+
                 // Получаем код из репозитория
                 checkout scm
 
@@ -85,6 +88,7 @@ pipeline {
             steps {
                 // Собираем проект, пропуская тесты (они уже выполнены)
                 sh 'mvn clean package -DskipTests'
+                sh 'ls -l target/ZebraPRJ-0.0.1-SNAPSHOT.jar' // Проверка наличия JAR
 
                 // Архивируем собранный JAR-файл
                 archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
@@ -97,7 +101,7 @@ pipeline {
                     // Собираем Docker образ с двумя тегами
                     sh """
                         echo "=== Building Docker image ==="
-                        ${DOCKER_PATH} build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                        ${DOCKER_PATH} build --no-cache -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                         ${DOCKER_PATH} tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
                         echo "Image built: ${DOCKER_IMAGE}:${DOCKER_TAG}"
                     """
