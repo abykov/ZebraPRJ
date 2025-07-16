@@ -99,12 +99,12 @@ pipeline {
         // ====================== СОЗДАНИЕ DOCKER ОБРАЗА ======================
         stage('Build Docker Image') {
             steps {
+                    // Извлечь архивированный JAR-файл
+                    copyArtifacts filter: 'target/ZebraPRJ-0.0.1-SNAPSHOT.jar',
+                        projectName: '${JOB_NAME}',
+                        selector: specific('${BUILD_NUMBER}')
                     // Собираем Docker образ с двумя тегами
                     sh """
-                        // Извлечь архивированный JAR-файл
-                        copyArtifacts filter: 'target/ZebraPRJ-0.0.1-SNAPSHOT.jar',
-                                     projectName: '${JOB_NAME}',
-                                     selector: specific('${BUILD_NUMBER}')
                         echo "=== Checking JAR file on Build Docker Image stage(2)==="
                         ls -l target/ZebraPRJ-0.0.1-SNAPSHOT.jar
                         echo "=== Building Docker image ==="
