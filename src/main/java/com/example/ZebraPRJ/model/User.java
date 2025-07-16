@@ -1,21 +1,32 @@
 package com.example.ZebraPRJ.model;
 
-public class User {
-    private Long id;
-    private String name;
-    private String email;
-    private Integer age;
+import jakarta.persistence.*;
+import java.time.LocalDate;
 
+@Entity
+@Table(name = "users")
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "name", nullable = false)
+    private String name;
+    @Column(name = "email", nullable = false)
+    private String email;
+    @Column(name = "birthdate", nullable = false)
+    private LocalDate birthdate;
+
+    // Конструктор по умолчанию (требуется для JPA)
     public User() {
     }
 
-    public User(Long id, String name, String email, Integer age){
+    public User(Long id, String name, String email, LocalDate birthdate){
         this.id = id;
         this.name = name;
         this.email = email;
-        this.age = age;
+        this.birthdate = birthdate;
     }
-
+    // Геттеры и сеттеры
     public Long getId(){
         return id;
     }
@@ -40,11 +51,11 @@ public class User {
         this.email = email;
     }
 
-    public Integer getAge(){
-        return age;
+    public LocalDate getBirthdate(){
+        return birthdate;
     }
 
-    public void setAge(Integer age){
-        this.age = age;
+    public void setBirthdate(LocalDate birthdate){
+        this.birthdate = birthdate;
     }
 }

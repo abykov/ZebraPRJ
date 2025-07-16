@@ -2,11 +2,12 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'zebra-prj'           // Название Docker образа
-        DOCKER_TAG = "${env.BUILD_ID}"       // Тег образа (по номеру сборки)
-        CONTAINER_NAME = 'zebra-prj'         // Имя контейнера
-        APP_PORT = '8081'                    // Порт приложения
-        DOCKER_PATH = '/usr/bin/docker' // Для MacOS явно указываем путь к Docker
+        DOCKER_IMAGE = 'zebra-prj'       // Название Docker образа
+        DOCKER_TAG = "${env.BUILD_ID}"   // Тег образа (по номеру сборки)
+        CONTAINER_NAME = 'zebra-prj'     // Имя контейнера
+        APP_PORT = '8081'                // Порт приложения
+        DOCKER_PATH = '/usr/bin/docker'
+        DOCKER_NETWORK = 'jenkins_default' // Имя сети из docker-compose
     }
 
     stages {
@@ -109,8 +110,8 @@ pipeline {
                     // Останавливаем и удаляем старый контейнер (если есть)
                     sh """
                         echo "=== Stopping old container ==="
-                        ${DOCKER_PATH}  stop ${CONTAINER_NAME} || true
-                        ${DOCKER_PATH}  rm ${CONTAINER_NAME} || true
+                        ${DOCKER_PATH} stop ${CONTAINER_NAME} || true
+                        ${DOCKER_PATH} rm ${CONTAINER_NAME} || true
                     """
 
                     // Запускаем новый контейнер
@@ -119,6 +120,8 @@ pipeline {
                         ${DOCKER_PATH}  run -d \\
                             -p ${APP_PORT}:${APP_PORT} \\
                             --name ${CONTAINER_NAME} \\
+                            --network ${DOCKER_NETWORK} \\
+                            -e SPRING_PROFILES_ACTIVE=docker \\
                             ${DOCKER_IMAGE}:latest
                     """
             }
