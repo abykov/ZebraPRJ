@@ -98,6 +98,12 @@ pipeline {
 
         // ====================== СОЗДАНИЕ DOCKER ОБРАЗА ======================
         stage('Build Docker Image') {
+            agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args '-v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
             steps {
                     // Собираем Docker образ с двумя тегами
                     sh """
