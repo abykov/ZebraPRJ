@@ -98,15 +98,13 @@ pipeline {
 
         // ====================== СОЗДАНИЕ DOCKER ОБРАЗА ======================
         stage('Build Docker Image') {
-            agent {
-                docker {
-                    image 'maven:3.8.3-openjdk-17'
-                    args '-v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock'
-                }
-            }
             steps {
                     // Собираем Docker образ с двумя тегами
                     sh """
+                        // Извлечь архивированный JAR-файл
+                        copyArtifacts filter: 'target/ZebraPRJ-0.0.1-SNAPSHOT.jar',
+                                     projectName: '${JOB_NAME}',
+                                     selector: specific('${BUILD_NUMBER}')
                         echo "=== Checking JAR file on Build Docker Image stage(2)==="
                         ls -l target/ZebraPRJ-0.0.1-SNAPSHOT.jar
                         echo "=== Building Docker image ==="
