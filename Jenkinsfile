@@ -92,7 +92,8 @@ pipeline {
                 sh 'ls -l target/ZebraPRJ-0.0.1-SNAPSHOT.jar' // Проверка наличия JAR
 
                 // Архивируем собранный JAR-файл
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                //archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                stash name: 'jar-artifact', includes: 'target/ZebraPRJ-0.0.1-SNAPSHOT.jar'
             }
         }
 
@@ -100,9 +101,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                     // Извлечь архивированный JAR-файл
-                    copyArtifacts filter: 'target/ZebraPRJ-0.0.1-SNAPSHOT.jar',
-                                projectName: '${JOB_NAME}',
-                                selector: lastSuccessful()
+                    unstash 'jar-artifact'
+
                     // Собираем Docker образ с двумя тегами
                     sh """
                         echo "=== Checking JAR file on Build Docker Image stage(2)==="
