@@ -36,7 +36,7 @@ public class ZebraPrjController {
 
     @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get list of users",
-            description = "Return list of users with their parameters (id, name, email, age)")
+            description = "Return list of users with their parameters (id, name, email, birthdate)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved list of users"),
             @ApiResponse(responseCode = "500", description = "=( Internal server error =(")
