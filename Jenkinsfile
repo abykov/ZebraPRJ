@@ -101,8 +101,8 @@ pipeline {
             steps {
                     // Извлечь архивированный JAR-файл
                     copyArtifacts filter: 'target/ZebraPRJ-0.0.1-SNAPSHOT.jar',
-                        projectName: '${JOB_NAME}',
-                        selector: specific('${BUILD_NUMBER}')
+                                projectName: '${JOB_NAME}',
+                                selector: lastSuccessful()
                     // Собираем Docker образ с двумя тегами
                     sh """
                         echo "=== Checking JAR file on Build Docker Image stage(2)==="
