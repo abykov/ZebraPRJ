@@ -1,17 +1,25 @@
 package com.example.ZebraPRJ.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "name"),
+        @UniqueConstraint(columnNames = "email")
+})
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "name", nullable = false)
+    @NotBlank(message = "Name cannot be empty")
+    @Column(name = "name", nullable = false, unique = true)
     private String name;
-    @Column(name = "email", nullable = false)
+    @NotBlank(message = "Email cannot be empty")
+    @Email(message = "Email should be valid")
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
     @Column(name = "birthdate", nullable = false)
     private LocalDate birthdate;
