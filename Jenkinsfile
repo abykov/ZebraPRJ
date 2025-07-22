@@ -142,7 +142,7 @@ pipeline {
         stage('Verify') {
             steps {
                 // Даём приложению 5 секунд на запуск
-                sleep(time: 5, unit: 'SECONDS')
+                sleep(time: 15, unit: 'SECONDS')
 
                 // Проверяем статус контейнера и доступность эндпоинтов
                 sh """
