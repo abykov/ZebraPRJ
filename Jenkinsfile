@@ -12,6 +12,7 @@ pipeline {
         APP_PORT = '8081'                // Порт приложения
         DOCKER_PATH = '/usr/bin/docker'
         DOCKER_NETWORK = 'jenkins_jenkins-network' // Имя сети из docker-compose
+        TESTCONTAINERS_NETWORK = 'jenkins_jenkins-network'
     }
 
     stages {
@@ -55,19 +56,7 @@ pipeline {
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
             steps {
-                // Determine the Docker host IP programmatically
-                // and pass it to Testcontainers, bypassing any DNS issues.
-                sh '''
-                    # 1. Inspect the bridge network to find the Gateway IP address.
-                    # This is the IP address of the host from the container's perspective.
-                    export DOCKER_HOST_IP=$(docker network inspect bridge -f '{{(index .IPAM.Config 0).Gateway}}')
-
-                    echo "--- Detected Docker Host IP for Testcontainers: ${DOCKER_HOST_IP} ---"
-
-                    # 2. Run the test, passing this IP to Testcontainers.
-                    mvn test -Dtestcontainers.host.override=${DOCKER_HOST_IP}
-                '''
-
+                 sh 'mvn test'
             }
 
             post {
