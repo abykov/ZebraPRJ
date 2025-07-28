@@ -53,11 +53,17 @@ pipeline {
             agent {
                docker {
                    image 'maven:3.8.3-openjdk-17'
-                   args '-v $HOME/.m2:/root/.m2'
+                   // We give this container three arguments:
+                   // 1. A volume to cache Maven dependencies.
+                   // 2. A volume to mount the host's Docker socket, so Testcontainers can work.
+                   // 3. An environment variable to set JAVA_HOME correctly inside THIS container.
+                   args '-v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -e JAVA_HOME=/usr/lib/jvm/java-17-openjdk'
                }
             }
             steps {
-                 sh 'mvn test'
+                 // This command tells Testcontainers to use the special address for the Docker host,
+                 // which is necessary when running inside a sibling container.
+                 sh 'mvn test -Dtestcontainers.host.override=host.docker.internal'
             }
 
             post {
