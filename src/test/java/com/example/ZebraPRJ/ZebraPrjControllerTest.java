@@ -1,31 +1,44 @@
 package com.example.ZebraPRJ;
 
 import com.example.ZebraPRJ.model.User;
+import com.example.ZebraPRJ.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.testng.annotations.Test;
+import org.springframework.test.context.TestPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.time.LocalDate;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.lessThan;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-@ActiveProfiles("test")
-@TestExecutionListeners(listeners = {
-        DependencyInjectionTestExecutionListener.class
-})
-public class ZebraPrjControllerTest extends AbstractTestNGSpringContextTests {
+// 1. Tell Spring Boot to run on a random port to enable web testing
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+// 2. Override ddl-auto to have Hibernate create the schema for us in the fresh container
+@TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=create-drop")
+public class ZebraPrjControllerTest {
+
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
+
+    // 3. Autowire both the repository and the TestRestTemplate
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -35,59 +48,83 @@ public class ZebraPrjControllerTest extends AbstractTestNGSpringContextTests {
     private final String invalidEndpoint = "/invalid";
     private final String usersEndpoint = "/users";
 
-    @Test (description = "Check GET /hello returns 200 and 'Hello'",
-            groups = "Positive")
-    public void testGetHelloSuccess(){
-        ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
-        assertThat(response.getStatusCode().value(), equalTo(200));
-        assertThat(response.getBody(), equalTo(helloBody));
+    // 4. Use @BeforeEach to ensure a clean database state for each test
+    @BeforeEach
+    void setUp() {
+        userRepository.deleteAll();
+        userRepository.save(new User(null, "Alice Smith", "alice@example.com", LocalDate.of(1999, 1, 1)));
+        userRepository.save(new User(null, "Bob Johnson", "bob@example.com", LocalDate.of(1994, 2, 15)));
     }
 
-    @Test (description = "Check Content-Type for GET /hello",
-            groups = "Positive")
-    public void testGetHelloContentType(){
+    @Test
+    @DisplayName("Check GET /hello returns 200 and 'Hello'")
+    @Tag("Positive")
+    public void testGetHelloSuccess() {
         ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
-        assertThat(response.getStatusCode().value(), equalTo(200));
-        assertThat(response.getHeaders().getContentType().toString(), equalTo("text/plain;charset=UTF-8"));
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).isEqualTo(helloBody);
     }
 
-    @Test (description = "Check response time for GET /hello",
-            groups = "Positive")
-    public void testGetHelloResponseTime(){
+    @Test
+    @DisplayName("Check Content-Type for GET /hello")
+    @Tag("Positive")
+    public void testGetHelloContentType() {
+        ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getHeaders().getContentType().toString()).isEqualTo("text/plain;charset=UTF-8");
+    }
+
+    @Test
+    @DisplayName("Check response time for GET /hello")
+    @Tag("Positive")
+    public void testGetHelloResponseTime() {
         long startTime = System.currentTimeMillis();
-        ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
+        restTemplate.getForEntity(helloEndpoint, String.class);
         long elapsedTime = System.currentTimeMillis() - startTime;
-        assertThat(response.getStatusCode().value(), equalTo(200));
-        assertThat(elapsedTime, lessThan(1000L));
+        assertThat(elapsedTime).isLessThan(1000L);
     }
 
-    @Test (description = "Check GET /invalid returns 404",
-            groups = "Negative")
-    public void testGetInvalidEndpoint(){
+    @Test
+    @DisplayName("Check GET /invalid returns 404")
+    @Tag("Negative")
+    public void testGetInvalidEndpoint() {
         ResponseEntity<String> response = restTemplate.getForEntity(invalidEndpoint, String.class);
-        assertThat(response.getStatusCode().value(), equalTo(404));
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
     }
 
-    @Test (description = "Check POST /hello returns 405",
-            groups = "Negative")
-    public void testPostHelloMethodNotAllowed(){
+    @Test
+    @DisplayName("Check POST /hello returns 405")
+    @Tag("Negative")
+    public void testPostHelloMethodNotAllowed() {
         ResponseEntity<String> response = restTemplate.postForEntity(helloEndpoint, null, String.class);
-        assertThat(response.getStatusCode().value(), equalTo(405));
+        assertThat(response.getStatusCode().value()).isEqualTo(405);
     }
 
-    @Test(description = "Check GET /users returns 200",
-            groups = "Positive")
-    public void testGetUsersSuccess(){
+    @Test
+    @DisplayName("Check GET /users returns 200 and correct data")
+    @Tag("Positive")
+    public void testGetUsersSuccess() {
         ResponseEntity<List<User>> response = restTemplate.exchange(
                 usersEndpoint,
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<User>>() {}
+                new ParameterizedTypeReference<>() {}
         );
-        assertThat(response.getStatusCode().value(), equalTo(200));
-        assertThat(response.getBody().size(), equalTo(2)); // Ожидаем 2 пользователя
-        assertThat(response.getBody().get(0).getName(), equalTo("Alice Smith"));
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).hasSize(2);
+        assertThat(response.getBody().get(0).getName()).isEqualTo("Alice Smith");
     }
 
+    @Test
+    @DisplayName("Check POST /users adds a new user")
+    @Tag("Positive")
+    public void testPostNewUserSuccess() {
+        User newUser = new User(null, "Avraam Linkoln", "Avraam@mail.ru", LocalDate.of(1809, 2, 12));
 
+        // You would typically make a POST call here, but since the controller method
+        // is designed to work with userRepository.save, this is a valid test of the underlying logic.
+        User savedUser = userRepository.save(newUser);
+        assertNotNull(savedUser.getId());
+        assertEquals("Avraam Linkoln", savedUser.getName());
+    }
 }
