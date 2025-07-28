@@ -47,6 +47,56 @@ pipeline {
             }
         }
 
+        // ====================== NEW DIAGNOSTIC STAGE ======================
+        stage('Diagnose Networking') {
+            steps {
+                sh '''
+                    echo "--- STARTING NETWORK DIAGNOSTIC ---"
+
+                    # Step 1: Start a simple server container, publishing a random port
+                    echo "--> Starting a web server container named 'network-test-server'..."
+                    docker stop network-test-server || true
+                    docker rm network-test-server || true
+                    # The -P flag tells Docker to map the container's port 80 to a random port on the host
+                    docker run -d --rm -P --name network-test-server --network ${DOCKER_NETWORK} nginx:alpine
+
+                    # Give it a moment to start
+                    sleep 5
+
+                    # Step 2: Get the HOST port that Docker mapped port 80 to
+                    HOST_PORT=$(docker inspect --format='{{(index (index .NetworkSettings.Ports "80/tcp") 0).HostPort}}' network-test-server)
+                    if [ -z "$HOST_PORT" ]; then
+                        echo "CRITICAL: Could not get the mapped HOST PORT of the test server."
+                        docker stop network-test-server
+                        exit 1
+                    fi
+                    echo "Test server container port 80 is mapped to HOST port: ${HOST_PORT}"
+
+                    # Step 3: Test connectivity to the host using host.docker.internal
+                    echo "--> Testing connection to 'host.docker.internal' on the mapped port..."
+
+                    echo "--> First, trying to resolve host.docker.internal..."
+                    ping -c 4 host.docker.internal
+
+                    echo "--> Now, attempting to curl http://host.docker.internal:${HOST_PORT}"
+                    # We expect this curl to succeed by returning the nginx welcome page
+                    if curl -s --connect-timeout 10 "http://host.docker.internal:${HOST_PORT}" | grep -q "Thank you for using nginx"; then
+                        echo "SUCCESS: Connection to host.docker.internal worked!"
+                        echo "This means the problem lies elsewhere. But if it fails, this is the root cause."
+                    else
+                        echo "FAILURE: Could not connect to host.docker.internal. This is the root cause of the Testcontainers issue."
+                        echo "The Jenkins container cannot reach sibling containers via the Docker host."
+                    fi
+
+                    # Step 4: Clean up
+                    echo "--> Cleaning up the test server container..."
+                    docker stop network-test-server
+
+                    echo "--- NETWORK DIAGNOSTIC COMPLETE ---"
+                '''
+            }
+        }
+
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
             steps {
