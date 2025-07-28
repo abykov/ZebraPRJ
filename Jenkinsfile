@@ -11,7 +11,7 @@ pipeline {
         CONTAINER_NAME = 'zebra-prj'     // Имя контейнера
         APP_PORT = '8081'                // Порт приложения
         DOCKER_PATH = '/usr/bin/docker'
-        DOCKER_NETWORK = 'jenkins_default' // Имя сети из docker-compose
+        DOCKER_NETWORK = 'jenkins-network' // Имя сети из docker-compose
     }
 
     stages {
@@ -50,10 +50,10 @@ pipeline {
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
             steps {
-                // Запускаем только тесты (без сборки)
-                sh 'mvn test surefire-report:report'
+                // Запускаем только тесты (без сборки) и Tell Testcontainers how to connect to sibling containers
+                sh 'mvn test -Dtestcontainers.host.override=host.docker.internal surefire-report:report'
 
-                // Архивируем отчёты TestNG
+                // Архивируем отчёты тестов
                 archiveArtifacts artifacts: 'target/surefire-reports/**/*', fingerprint: true
 
                 // Публикуем результаты в формате JUnit для Jenkins

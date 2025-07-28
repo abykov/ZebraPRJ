@@ -31,12 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 // 2. Override ddl-auto to have Hibernate create the schema for us in the fresh container
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=create-drop")
 public class ZebraPrjControllerTest {
-    // This static block runs before anything else. It tells Testcontainers how to
-    // connect back to services running on the Docker host (your Mac).
-    static {
-        System.setProperty("testcontainers.host.override", "host.docker.internal");
-    }
-
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
