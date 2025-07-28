@@ -11,7 +11,7 @@ pipeline {
         CONTAINER_NAME = 'zebra-prj'     // Имя контейнера
         APP_PORT = '8081'                // Порт приложения
         DOCKER_PATH = '/usr/bin/docker'
-        DOCKER_NETWORK = 'jenkins-network' // Имя сети из docker-compose
+        DOCKER_NETWORK = 'jenkins_jenkins-network' // Имя сети из docker-compose
     }
 
     stages {
