@@ -25,6 +25,11 @@ pipeline {
                                 java -version
                                 echo "3. Maven Version:"
                                 mvn -v
+
+                                // --- THIS IS THE CRITICAL DIAGNOSTIC ---
+                                echo "=== Listing Available Docker Networks ==="
+                                docker network ls
+                                echo "========================================"
                             '''
                         }
         }
