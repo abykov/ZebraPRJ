@@ -53,6 +53,21 @@ pipeline {
             }
         }
 
+        // ====================== NEW DIAGNOSTIC STAGE ======================
+        stage('Interactive Debug') {
+            steps {
+                sh '''
+                    echo "!!!!!!!!!! INTERACTIVE DEBUG SESSION STARTED !!!!!!!!!!"
+                    echo "The pipeline is now paused for 5 minutes."
+                    echo "Please open a NEW terminal on your Mac and run the following command:"
+                    echo "docker exec -it jenkins /bin/bash"
+                    echo "Then, follow the instructions from the AI to run diagnostic commands inside the container."
+                    sleep 400
+                    echo "!!!!!!!!!! INTERACTIVE DEBUG SESSION ENDED !!!!!!!!!!"
+                '''
+            }
+        }
+
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
             steps {
