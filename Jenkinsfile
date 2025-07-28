@@ -2,17 +2,12 @@ pipeline {
     agent any
 
     environment {
-        // Set JAVA_HOME and PATH globally. This will be inherited by ALL stages.
-        JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-arm64"
-        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
-
         DOCKER_IMAGE = 'zebra-prj'       // Название Docker образа
         DOCKER_TAG = "${env.BUILD_ID}"   // Тег образа (по номеру сборки)
         CONTAINER_NAME = 'zebra-prj'     // Имя контейнера
         APP_PORT = '8081'                // Порт приложения
         DOCKER_PATH = '/usr/bin/docker'
         DOCKER_NETWORK = 'jenkins_jenkins-network' // Имя сети из docker-compose
-        TESTCONTAINERS_NETWORK = 'jenkins_jenkins-network'
     }
 
     stages {
@@ -53,23 +48,14 @@ pipeline {
             }
         }
 
-        // ====================== NEW DIAGNOSTIC STAGE ======================
-        stage('Interactive Debug') {
-            steps {
-                sh '''
-                    echo "!!!!!!!!!! INTERACTIVE DEBUG SESSION STARTED !!!!!!!!!!"
-                    echo "The pipeline is now paused for 5 minutes."
-                    echo "Please open a NEW terminal on your Mac and run the following command:"
-                    echo "docker exec -it jenkins /bin/bash"
-                    echo "Then, follow the instructions from the AI to run diagnostic commands inside the container."
-                    sleep 400
-                    echo "!!!!!!!!!! INTERACTIVE DEBUG SESSION ENDED !!!!!!!!!!"
-                '''
-            }
-        }
-
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
+            agent {
+               docker {
+                   image 'maven:3.8.3-openjdk-17'
+                   args '-v $HOME/.m2:/root/.m2'
+               }
+            }
             steps {
                  sh 'mvn test'
             }
