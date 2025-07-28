@@ -52,12 +52,6 @@ pipeline {
 
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
-             agent {
-                docker {
-                    image 'maven:3.8.3-openjdk-17'
-                    args '-v $HOME/.m2:/root/.m2'
-                }
-            }
             steps {
                 // Запускаем только тесты (без сборки)
                 sh 'mvn test surefire-report:report'
