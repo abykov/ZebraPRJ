@@ -2,6 +2,10 @@ pipeline {
     agent any
 
     environment {
+        // Set JAVA_HOME and PATH globally. This will be inherited by ALL stages.
+        JAVA_HOME = "/usr/lib/jvm/java-17-openjdk-arm64"
+        PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+
         DOCKER_IMAGE = 'zebra-prj'       // Название Docker образа
         DOCKER_TAG = "${env.BUILD_ID}"   // Тег образа (по номеру сборки)
         CONTAINER_NAME = 'zebra-prj'     // Имя контейнера
@@ -15,18 +19,11 @@ pipeline {
             steps {
                             sh '''
                                 echo "=== Проверка окружения ==="
-                                echo "1. Проверка Docker:"
+                                echo "1. Docker Version:"
                                 docker --version
-
-                                echo "2. Проверка Java:"
-                                echo "3. Установка переменных окружения ==="
-
-                                export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
-                                export PATH=$JAVA_HOME/bin:$PATH
-
+                                echo "2. Java Version (from global environment):"
                                 java -version
-
-                                echo "4. Проверка Maven:"
+                                echo "3. Maven Version:"
                                 mvn -v
                             '''
                         }
@@ -52,12 +49,6 @@ pipeline {
 
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
-             agent {
-                docker {
-                    image 'maven:3.8.3-openjdk-17'
-                    args '-v $HOME/.m2:/root/.m2'
-                }
-            }
             steps {
                 // Запускаем только тесты (без сборки)
                 sh 'mvn test surefire-report:report'
