@@ -28,6 +28,9 @@ pipeline {
             agent {
                 docker {
                     image 'maven:3.8.3-openjdk-17'
+                    // This gives the process inside the container permission to use the mounted Docker socket.
+                    user 'root'
+
                     // THIS IS THE KEY CONFIGURATION:
                     // 1. '-v $HOME/.m2:/root/.m2': Caches Maven dependencies for faster builds.
                     // 2. '-v /var/run/docker.sock:/var/run/docker.sock': Gives this container access to the host's Docker daemon, which is required for Testcontainers to work.
