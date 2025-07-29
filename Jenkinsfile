@@ -7,7 +7,7 @@ pipeline {
         CONTAINER_NAME = 'zebra-prj'     // Имя контейнера
         APP_PORT = '8081'                // Порт приложения
         DOCKER_PATH = '/usr/bin/docker'
-        DOCKER_NETWORK = 'jenkins_jenkins-network' // Имя сети из docker-compose
+        DOCKER_NETWORK = 'jenkins_default' // Имя сети из docker-compose
     }
 
     stages {
@@ -15,17 +15,19 @@ pipeline {
             steps {
                             sh '''
                                 echo "=== Проверка окружения ==="
-                                echo "1. Docker Version:"
+                                echo "1. Проверка Docker:"
                                 docker --version
-                                echo "2. Java Version (from global environment):"
-                                java -version
-                                echo "3. Maven Version:"
-                                mvn -v
 
-                                # --- THIS IS THE CRITICAL DIAGNOSTIC ---
-                                echo "=== Listing Available Docker Networks ==="
-                                docker network ls
-                                echo "======================================="
+                                echo "2. Проверка Java:"
+                                echo "3. Установка переменных окружения ==="
+
+                                export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-arm64
+                                export PATH=$JAVA_HOME/bin:$PATH
+
+                                java -version
+
+                                echo "4. Проверка Maven:"
+                                mvn -v
                             '''
                         }
         }
@@ -50,28 +52,25 @@ pipeline {
 
         // ====================== ТЕСТИРОВАНИЕ ======================
         stage('Run Tests') {
-            agent {
-               docker {
-                   image 'maven:3.8.3-openjdk-17'
-                   // We give this container three arguments:
-                   // 1. A volume to cache Maven dependencies.
-                   // 2. A volume to mount the host's Docker socket, so Testcontainers can work.
-                   // 3. An environment variable to set JAVA_HOME correctly inside THIS container.
-                   args '-v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -e JAVA_HOME=/usr/lib/jvm/java-17-openjdk'
-               }
+             agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
             }
             steps {
-                 // This command tells Testcontainers to use the special address for the Docker host,
-                 // which is necessary when running inside a sibling container.
-                 sh 'mvn test -Dtestcontainers.host.override=host.docker.internal'
+                // Запускаем только тесты (без сборки)
+                sh 'mvn test surefire-report:report'
+
+                // Архивируем отчёты TestNG
+                archiveArtifacts artifacts: 'target/surefire-reports/**/*', fingerprint: true
+
+                // Публикуем результаты в формате JUnit для Jenkins
+                junit 'target/surefire-reports/*.xml'
             }
 
             post {
                 always {
-                    // Архивируем отчёты тестов
-                    archiveArtifacts artifacts: 'target/surefire-reports/**/*', fingerprint: true
-                    // Публикуем результаты в формате JUnit для Jenkins
-                    junit 'target/surefire-reports/*.xml'
                     // Всегда сохраняем отчёты, даже если тесты упали
                     echo "Test results archived"
                 }
