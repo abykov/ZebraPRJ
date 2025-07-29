@@ -1,43 +1,75 @@
 pipeline {
+    // This top-level agent is only for simple orchestration steps.
     agent any
 
+    environment {
+        DOCKER_IMAGE = 'zebra-prj'
+        DOCKER_TAG = "${env.BUILD_ID}"
+        CONTAINER_NAME = 'zebra-prj'
+        APP_PORT = '8081'
+        DOCKER_PATH = '/usr/bin/docker'
+        // This is the correct network name for the final Deploy stage.
+        DOCKER_NETWORK = 'jenkins_jenkins-network'
+    }
+
     stages {
-        // ====================== NEW DIAGNOSTIC STAGE ======================
-        stage('Discover Environment') {
+        stage('Checkout') {
             steps {
-                sh '''
-                    echo "!!!!!!!!!! STARTING ENVIRONMENT DISCOVERY !!!!!!!!!!"
-
-                    echo "--- Step 1: Finding the 'java' executable ---"
-                    WHICH_JAVA=$(which java)
-                    echo "Command 'which java' found it at: ${WHICH_JAVA}"
-                    echo ""
-
-                    echo "--- Step 2: Resolving the real path (following symbolic links) ---"
-                    # The 'readlink -f' command gives the true, canonical path
-                    REAL_JAVA_PATH=$(readlink -f ${WHICH_JAVA})
-                    echo "The real path to the java binary is: ${REAL_JAVA_PATH}"
-                    echo ""
-
-                    echo "--- Step 3: Determining the correct JAVA_HOME ---"
-                    # The JAVA_HOME is usually two directories above the 'bin/java' file
-                    CORRECT_JAVA_HOME=$(dirname $(dirname ${REAL_JAVA_PATH}))
-                    echo "THE CORRECT JAVA_HOME FOR THIS CONTAINER IS: ${CORRECT_JAVA_HOME}"
-                    echo ""
-
-                    echo "!!!!!!!!!! DISCOVERY COMPLETE !!!!!!!!!!"
-                '''
+                cleanWs()
+                checkout scm
             }
         }
 
-        // We will skip all other stages to get our answer quickly.
-        stage('Other') {
+        // ====================== ТЕСТИРОВАНИЕ ======================
+        stage('Run Tests') {
+            // Use a dedicated, clean Maven+Java container for the tests.
+            agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    // THIS IS THE FIX:
+                    // 1. Mount the Maven cache.
+                    // 2. Mount the Docker socket to allow Testcontainers to work.
+                    // The JAVA_HOME inside this official image is set correctly by default.
+                    args '-v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
             steps {
-                echo "Skipping further stages during diagnostic."
+                // This command tells Testcontainers the correct address for the Docker host,
+                // which is required when running inside a sibling container.
+                sh 'mvn test -Dtestcontainers.host.override=host.docker.internal'
             }
-            when {
-                expression { false }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'target/surefire-reports/**/*', fingerprint: true
+                    junit 'target/surefire-reports/*.xml'
+                }
             }
+        }
+
+        // ====================== СБОРКА ======================
+        stage('Build') {
+            // This stage also uses a clean container, which is excellent practice.
+            agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
+            steps {
+                sh 'mvn clean package -DskipTests'
+                stash name: 'jar-artifact', includes: 'target/ZebraPRJ-0.0.1-SNAPSHOT.jar'
+            }
+        }
+
+        // ... All other stages (Build Docker Image, Deploy, Verify) are correct and remain the same ...
+        stage('Build Docker Image') { /* ... */ }
+        stage('Deploy') { /* ... */ }
+        stage('Verify') { /* ... */ }
+    }
+
+    post {
+        always {
+            echo "Pipeline ${currentBuild.fullDisplayName} completed with status: ${currentBuild.currentResult}"
         }
     }
 }
