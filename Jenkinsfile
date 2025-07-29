@@ -27,10 +27,12 @@ pipeline {
             agent {
                 docker {
                     image 'maven:3.8.3-openjdk-17'
-                    // Explicitly run as the root user.
-                    // This gives the process inside the container permission to use the mounted Docker socket.
-                    // The arguments to mount the cache and the Docker socket are still required.
-                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2'
+
+                    // 1. We run as root to ensure permissions for the Docker socket.
+                    // 2. We mount the Docker socket so Testcontainers can find the daemon.
+                    // 3. We set the TESTCONTAINERS_NETWORK env var to force all test containers
+                    //    onto the same network as the Jenkins services.
+                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2 -e TESTCONTAINERS_NETWORK=jenkins_jenkins-network'
                 }
             }
             steps {
