@@ -33,7 +33,7 @@ pipeline {
                     user 'root'
 
                     // The arguments to mount the cache and the Docker socket are still required.
-                    args '-v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock'
+                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2'
                 }
             }
             steps {
