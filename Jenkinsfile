@@ -24,24 +24,20 @@ pipeline {
 
         // ====================== TESTING STAGE ======================
         stage('Run Tests') {
-            // Use a dedicated, clean Maven+Java container for the tests.
             agent {
                 docker {
                     image 'maven:3.8.3-openjdk-17'
+
+                    // THIS IS THE FINAL FIX: We explicitly run as the root user.
                     // This gives the process inside the container permission to use the mounted Docker socket.
                     user 'root'
 
-                    // THIS IS THE KEY CONFIGURATION:
-                    // 1. '-v $HOME/.m2:/root/.m2': Caches Maven dependencies for faster builds.
-                    // 2. '-v /var/run/docker.sock:/var/run/docker.sock': Gives this container access to the host's Docker daemon, which is required for Testcontainers to work.
-                    // The JAVA_HOME inside this official Docker image is set correctly by default, so we don't need to define it.
+                    // The arguments to mount the cache and the Docker socket are still required.
                     args '-v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock'
                 }
             }
             steps {
-                // This command tells Testcontainers the correct network address for the Docker host,
-                // which is necessary for the test process (inside this container) to communicate
-                // with the PostgreSQL container (running as a sibling on the host).
+                // This property is still needed to solve the networking between the sibling containers.
                 sh 'mvn test -Dtestcontainers.host.override=host.docker.internal'
             }
             post {
