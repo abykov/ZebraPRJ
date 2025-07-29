@@ -27,11 +27,8 @@ pipeline {
             agent {
                 docker {
                     image 'maven:3.8.3-openjdk-17'
-
-                    // THIS IS THE FINAL FIX: We explicitly run as the root user.
+                    // Explicitly run as the root user.
                     // This gives the process inside the container permission to use the mounted Docker socket.
-                    user 'root'
-
                     // The arguments to mount the cache and the Docker socket are still required.
                     args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2'
                 }
