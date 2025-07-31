@@ -27,16 +27,21 @@ pipeline {
             agent {
                 docker {
                     image 'maven:3.8.3-openjdk-17'
-                        // 1. -u root: Provides permission to use the Docker socket.
-                        // 2. -v /var/run/docker.sock...: Provides the path to the Docker daemon.
-                        // 3. --network jenkins_jenkins-network: Forces THIS agent container onto the correct network.
-                        // 4. -e TESTCONTAINERS_NETWORK=...: Tells Testcontainers to attach ANY container it creates to that same network.
-                        args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2 --network jenkins_jenkins-network -e TESTCONTAINERS_NETWORK=jenkins_jenkins-network'
+                        args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2'
                     }
             }
             steps {
-                // This property is still needed to solve the networking between the sibling containers.
-                sh 'mvn test'
+                sh '''
+                    # 1. Inspect the CORRECT network ('jenkins_jenkins-network') to find its Gateway IP address.
+                    # This is the address Testcontainers MUST use.
+                    export DOCKER_HOST_IP=$(docker network inspect ${DOCKER_NETWORK} -f '{{(index .IPAM.Config 0).Gateway}}')
+                    
+                    echo "--- Discovered correct Docker Host IP for Testcontainers: ${DOCKER_HOST_IP} ---"
+                    
+                    # 2. Run the test, passing this CORRECT IP to Testcontainers.
+                    # This overrides its faulty detection mechanism.
+                    mvn test -Dtestcontainers.host.override=${DOCKER_HOST_IP}
+                '''
             }
             post {
                 always {
