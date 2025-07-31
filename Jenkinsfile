@@ -27,16 +27,16 @@ pipeline {
             agent {
                 docker {
                     image 'maven:3.8.3-openjdk-17'
-
-                    // We add '--network jenkins_jenkins-network' to the arguments.
-                    // This forces this agent container onto the same network as the main Jenkins
-                    // container, allowing Testcontainers to create sibling containers that can communicate.
-                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2 --network jenkins_jenkins-network'
-                }
+                        // 1. -u root: Provides permission to use the Docker socket.
+                        // 2. -v /var/run/docker.sock...: Provides the path to the Docker daemon.
+                        // 3. --network jenkins_jenkins-network: Forces THIS agent container onto the correct network.
+                        // 4. -e TESTCONTAINERS_NETWORK=...: Tells Testcontainers to attach ANY container it creates to that same network.
+                        args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2 --network jenkins_jenkins-network -e TESTCONTAINERS_NETWORK=jenkins_jenkins-network'
+                    }
             }
             steps {
                 // This property is still needed to solve the networking between the sibling containers.
-                sh 'mvn test -Dtestcontainers.host.override=host.docker.internal'
+                sh 'mvn test'
             }
             post {
                 always {
