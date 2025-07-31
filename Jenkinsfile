@@ -1,16 +1,14 @@
 pipeline {
-    // This top-level agent is for simple orchestration steps.
-    // Tool-specific stages like testing and building will use their own dedicated agents.
+    // This top-level agent is for simple orchestration steps and has the Docker CLI.
     agent any
 
     environment {
-        // Project-specific variables, accessible in all stages.
         DOCKER_IMAGE = 'zebra-prj'
         DOCKER_TAG = "${env.BUILD_ID}"
         CONTAINER_NAME = 'zebra-prj'
         APP_PORT = '8081'
         DOCKER_PATH = '/usr/bin/docker'
-        // This is the correct network name for the Deploy stage, as discovered by our diagnostics.
+        // This is the correct network name for the Deploy stage.
         DOCKER_NETWORK = 'jenkins_jenkins-network'
     }
 
@@ -26,12 +24,10 @@ pipeline {
         stage('Prepare Test Environment') {
             steps {
                 script {
-                    // This stage runs on the main Jenkins agent, which has the Docker CLI.
-                    // We inspect the correct network to find its Gateway IP address.
-                    // This is the IP that the test container will need to use to reach the host.
+                    // This stage works perfectly. It discovers the correct gateway IP.
                     def dockerHostIp = sh(script: "docker network inspect ${DOCKER_NETWORK} -f '{{(index .IPAM.Config 0).Gateway}}'", returnStdout: true).trim()
                     echo "--- Discovered correct Docker Host IP for Testcontainers: ${dockerHostIp} ---"
-                    // We save this IP into a variable that the next stage can use.
+                    // We save this IP into a global environment variable for the next stage.
                     env.DOCKER_HOST_IP_FOR_TESTS = dockerHostIp
                 }
             }
@@ -42,7 +38,9 @@ pipeline {
             agent {
                 docker {
                     image 'maven:3.8.3-openjdk-17'
-                        args '-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2'
+                        // We inject the IP we discovered as an ENVIRONMENT VARIABLE.
+                        // This has higher priority and will not be ignored like the system property was.
+                        args "-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2 -e TESTCONTAINERS_HOST_OVERRIDE=${env.DOCKER_HOST_IP_FOR_TESTS}"
                     }
             }
             steps {
