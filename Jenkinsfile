@@ -22,6 +22,21 @@ pipeline {
             }
         }
 
+        // ====================== NEW DISCOVERY STAGE ======================
+        stage('Prepare Test Environment') {
+            steps {
+                script {
+                    // This stage runs on the main Jenkins agent, which has the Docker CLI.
+                    // We inspect the correct network to find its Gateway IP address.
+                    // This is the IP that the test container will need to use to reach the host.
+                    def dockerHostIp = sh(script: "docker network inspect ${DOCKER_NETWORK} -f '{{(index .IPAM.Config 0).Gateway}}'", returnStdout: true).trim()
+                    echo "--- Discovered correct Docker Host IP for Testcontainers: ${dockerHostIp} ---"
+                    // We save this IP into a variable that the next stage can use.
+                    env.DOCKER_HOST_IP_FOR_TESTS = dockerHostIp
+                }
+            }
+        }
+
         // ====================== TESTING STAGE ======================
         stage('Run Tests') {
             agent {
@@ -31,17 +46,9 @@ pipeline {
                     }
             }
             steps {
-                sh '''
-                    # 1. Inspect the CORRECT network ('jenkins_jenkins-network') to find its Gateway IP address.
-                    # This is the address Testcontainers MUST use.
-                    export DOCKER_HOST_IP=$(docker network inspect ${DOCKER_NETWORK} -f '{{(index .IPAM.Config 0).Gateway}}')
-                    
-                    echo "--- Discovered correct Docker Host IP for Testcontainers: ${DOCKER_HOST_IP} ---"
-                    
-                    # 2. Run the test, passing this CORRECT IP to Testcontainers.
-                    # This overrides its faulty detection mechanism.
-                    mvn test -Dtestcontainers.host.override=${DOCKER_HOST_IP}
-                '''
+                // This command now uses the IP we discovered in the previous stage.
+                // This overrides Testcontainers' faulty detection mechanism and provides the correct route.
+                sh "mvn test -Dtestcontainers.host.override=${env.DOCKER_HOST_IP_FOR_TESTS}"
             }
             post {
                 always {
