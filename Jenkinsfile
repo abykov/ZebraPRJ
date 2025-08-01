@@ -35,26 +35,23 @@ pipeline {
 
         // ====================== TESTING STAGE ======================
         stage('Run Tests') {
-            agent {
-                docker {
-                    image 'maven:3.8.3-openjdk-17'
-                        // We inject the IP we discovered as an ENVIRONMENT VARIABLE.
-                        // This has higher priority and will not be ignored like the system property was.
-                        args "-u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2 -e TESTCONTAINERS_HOST_OVERRIDE=${env.DOCKER_HOST_IP_FOR_TESTS}"
+                    agent {
+                        docker {
+                            image 'maven:3.8.3-openjdk-17'
+                            // Ensure the agent container joins the same network as Jenkins
+                            args "--network=${env.DOCKER_NETWORK} -u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2"
+                        }
                     }
-            }
-            steps {
-                // This command now uses the IP we discovered in the previous stage.
-                // This overrides Testcontainers' faulty detection mechanism and provides the correct route.
-                sh "mvn test -Dtestcontainers.host.override=${env.DOCKER_HOST_IP_FOR_TESTS}"
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'target/surefire-reports/**/*', fingerprint: true
-                    junit 'target/surefire-reports/*.xml'
+                    steps {
+                        // No override is necessary when all containers share a network
+                        sh 'mvn test'
+                    }
+                    post {
+                        always {
+                            junit 'target/surefire-reports/*.xml'
+                        }
+                    }
                 }
-            }
-        }
 
         // ====================== BUILD STAGE ======================
         stage('Build') {
