@@ -34,21 +34,43 @@ pipeline {
         }
 
         // ====================== TESTING STAGE ======================
-        stage('Run Tests') {
+
+        // STAGE 1: Actively diagnose the network environment
+                stage('Run Network Diagnostics') {
                     agent {
                         docker {
                             image 'maven:3.8.3-openjdk-17'
-                            // Ensure the agent container joins the same network as Jenkins
-                            args "--network=${env.DOCKER_NETWORK} -u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2"
+                            args "--network=${env.DOCKER_NETWORK} -u root -v /var/run/docker.sock:/var/run/docker.sock"
                         }
                     }
                     steps {
-                        // No override is necessary when all containers share a network
-                        sh 'mvn test'
+                        echo "--- Running Network Diagnostics inside the agent container ---"
+                        sh 'echo "Container IP Address:"; hostname -i'
+                        sh 'echo "\nNetwork Interfaces:"; ip a'
+                        sh 'echo "\nGateway of Custom Network (jenkins_jenkins-network):"; docker network inspect ${DOCKER_NETWORK} --format "{{(index .IPAM.Config 0).Gateway}}"'
+                        sh 'echo "\nAttempting to ping host.docker.internal:"; ping -c 4 host.docker.internal || echo "Ping failed, as expected."'
+                        echo "--- Diagnostics Complete ---"
+                    }
+                }
+
+                // STAGE 2: Run tests using the correctly determined Docker Host IP
+                stage('Run Tests') {
+                    steps {
+                        script {
+                            // Programmatically determine the gateway of the custom network. This is the reliable IP for the host.
+                            def dockerHostIp = sh(script: "docker network inspect ${env.DOCKER_NETWORK} -f '{{(index .IPAM.Config 0).Gateway}}'", returnStdout: true).trim()
+                            echo "--- Discovered Docker Host IP for Testcontainers: ${dockerHostIp} ---"
+
+                            // Use the discovered IP to run the tests in the agent container
+                            docker.image('maven:3.8.3-openjdk-17').args("--network=${env.DOCKER_NETWORK} -u root -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.m2:/root/.m2").inside {
+                                sh "mvn test -Dtestcontainers.host.override=${dockerHostIp}"
+                            }
+                        }
                     }
                     post {
                         always {
                             junit 'target/surefire-reports/*.xml'
+                            archiveArtifacts 'target/surefire-reports/*'
                         }
                     }
                 }
