@@ -10,8 +10,7 @@ pipeline {
         DOCKER_PATH = '/usr/bin/docker'
         // This is the correct network name for the Deploy stage.
         DOCKER_NETWORK = 'jenkins_jenkins-network'
-        // Explicitly set the Docker host to the gateway of the custom network
-        TESTCONTAINERS_HOST = '172.20.0.1'
+
     }
 
     stages {
@@ -22,43 +21,25 @@ pipeline {
             }
         }
 
-        // ====================== NEW DISCOVERY STAGE ======================
-        stage('Prepare Test Environment') {
-            steps {
-                script {
-                    // This stage works perfectly. It discovers the correct gateway IP.
-                    def dockerHostIp = sh(script: "docker network inspect ${DOCKER_NETWORK} -f '{{(index .IPAM.Config 0).Gateway}}'", returnStdout: true).trim()
-                    echo "--- Discovered correct Docker Host IP for Testcontainers: ${dockerHostIp} ---"
-                    // We save this IP into a global environment variable for the next stage.
-                    env.DOCKER_HOST_IP_FOR_TESTS = dockerHostIp
-                }
-            }
-        }
-
         // ====================== TESTING STAGE ======================
 
         stage('Run Tests') {
                     agent {
                         docker {
                             image 'maven:3.8.3-openjdk-17'
-                            args '''
-                                -u root
-                                -v /var/run/docker.sock:/var/run/docker.sock
-                                -v $HOME/.m2:/root/.m2
-                                --network ${DOCKER_NETWORK}
-                                -e TESTCONTAINERS_HOST_OVERRIDE=${TESTCONTAINERS_HOST}
-                                -e TESTCONTAINERS_RYUK_DISABLED=false
-                            '''
+                            args """
+                                -u root \
+                                -v /var/run/docker.sock:/var/run/docker.sock \
+                                -v $HOME/.m2:/root/.m2 \
+                                --network=${DOCKER_NETWORK} \
+                                -e TESTCONTAINERS_RYUK_DISABLED=false \
+                                -e TESTCONTAINERS_CHECKS_DISABLE=true \
+                                -e TESTCONTAINERS_NETWORK=${DOCKER_NETWORK}
+                            """
                         }
                     }
                     steps {
-                        sh '''
-                            echo "Docker network configuration:"
-                            docker network ls
-                            docker network inspect ${DOCKER_NETWORK}
-                            echo "Running Maven tests..."
-                            mvn test -Dtestcontainers.host.override=${TESTCONTAINERS_HOST}
-                        '''
+                        sh 'mvn test'
                     }
                     post {
                         always {
