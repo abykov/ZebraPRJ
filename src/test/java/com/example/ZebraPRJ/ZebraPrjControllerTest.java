@@ -16,9 +16,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.Testcontainers.*;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.DockerClientFactory;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -49,10 +49,11 @@ public class ZebraPrjControllerTest {
     private final String invalidEndpoint = "/invalid";
     private final String usersEndpoint = "/users";
 
+
     @BeforeAll
     static void init() {
-        System.out.println("Docker host: " + TestcontainersConfiguration.getInstance()
-                .getDockerClientStrategy().getDockerHostIpAddress());
+        String dockerHostIp = DockerClientFactory.instance().dockerHostIpAddress();
+        System.out.println("Docker host: " + dockerHostIp);
     }
 
     // 4. Use @BeforeEach to ensure a clean database state for each test
