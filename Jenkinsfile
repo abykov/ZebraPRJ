@@ -24,7 +24,7 @@ pipeline {
               image 'maven:3.8.3-openjdk-17'
               args """
                 -u root \
-                -v /var/run/docker.sock.raw:/var/run/docker.sock \
+                -v /var/run/docker.sock:/var/run/docker.sock \
                 -v $HOME/.m2:/root/.m2 \
                 --network=${DOCKER_NETWORK} \
                 -e TESTCONTAINERS_RYUK_DISABLED=false \
