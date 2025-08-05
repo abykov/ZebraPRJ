@@ -1,34 +1,108 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9-eclipse-temurin-17'
-            args '-v /var/run/docker.sock:/var/run/docker.sock' // give Maven container access to host Docker
-        }
-    }
+    agent any
 
     environment {
-        MAVEN_OPTS = "-Dmaven.repo.local=.m2/repository"
+        DOCKER_IMAGE = 'zebra-prj'
+        DOCKER_TAG = "${env.BUILD_ID}"
+        CONTAINER_NAME = 'zebra-prj'
+        APP_PORT = '8081'
+        DOCKER_PATH = '/usr/bin/docker'
+        DOCKER_NETWORK = 'jenkins_jenkins-network'
     }
 
     stages {
-        stage('Print Docker Info') {
+        stage('Checkout') {
             steps {
-                sh 'docker info'
-                sh 'docker ps -a'
+                cleanWs()
+                checkout scm
             }
         }
 
-        stage('Build and Test') {
+        stage('Run Tests') {
+            agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args """
+                        -u root \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        -v $HOME/.m2:/root/.m2 \
+                        --network=${DOCKER_NETWORK} \
+                        -e TESTCONTAINERS_RYUK_DISABLED=false \
+                        -e TESTCONTAINERS_CHECKS_DISABLE=true \
+                        -e TESTCONTAINERS_NETWORK=${DOCKER_NETWORK}
+                    """
+                }
+            }
             steps {
-                sh 'mvn clean verify -Dspring.profiles.active=test'
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
+        }
+
+        stage('Build') {
+            agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args '-v $HOME/.m2:/root/.m2'
+                }
+            }
+            steps {
+                sh 'mvn clean package -DskipTests'
+                stash name: 'jar-artifact', includes: 'target/ZebraPRJ-0.0.1-SNAPSHOT.jar'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                unstash 'jar-artifact'
+                sh """
+                    ${DOCKER_PATH} build --no-cache -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                    ${DOCKER_PATH} tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+                """
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh """
+                    ${DOCKER_PATH} stop ${CONTAINER_NAME} || true
+                    ${DOCKER_PATH} rm ${CONTAINER_NAME} || true
+                """
+                sh """
+                    ${DOCKER_PATH} run -d \\
+                        -p ${APP_PORT}:${APP_PORT} \\
+                        --name ${CONTAINER_NAME} \\
+                        --network ${DOCKER_NETWORK} \\
+                        -e SPRING_PROFILES_ACTIVE=docker \\
+                        ${DOCKER_IMAGE}:latest
+                """
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sleep(time: 15, unit: 'SECONDS')
+                sh """
+                    ${DOCKER_PATH} ps --filter name=${CONTAINER_NAME}
+                    curl -f http://localhost:${APP_PORT}/hello || echo "Service not responding"
+                """
             }
         }
     }
 
     post {
         always {
-            archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            junit 'target/surefire-reports/*.xml'
+            echo "Pipeline ${currentBuild.fullDisplayName} completed with status: ${currentBuild.currentResult}"
+        }
+        success {
+            echo "Pipeline succeeded! Application deployed successfully."
+        }
+        failure {
+            echo "Pipeline failed. Please review the logs."
         }
     }
 }
