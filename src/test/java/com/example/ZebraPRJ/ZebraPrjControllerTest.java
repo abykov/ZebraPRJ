@@ -2,6 +2,7 @@ package com.example.ZebraPRJ;
 
 import com.example.ZebraPRJ.model.User;
 import com.example.ZebraPRJ.repository.UserRepository;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.Testcontainers.*;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -46,6 +48,12 @@ public class ZebraPrjControllerTest {
     private final String helloBody = "Hello";
     private final String invalidEndpoint = "/invalid";
     private final String usersEndpoint = "/users";
+
+    @BeforeAll
+    static void init() {
+        System.out.println("Docker host: " + TestcontainersConfiguration.getInstance()
+                .getDockerClientStrategy().getDockerHostIpAddress());
+    }
 
     // 4. Use @BeforeEach to ensure a clean database state for each test
     @BeforeEach
