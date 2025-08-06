@@ -21,35 +21,32 @@ pipeline {
 
         // ====================== TESTING STAGE ======================
         stage('Run Tests') {
-            agent {
-                docker {
-                    image 'maven:3.8.3-openjdk-17'
-                    args """
-                        -u root \
-                        -v /var/run/docker.sock:/var/run/docker.sock \
-                        -v $HOME/.m2:/root/.m2 \
-                        --network=${DOCKER_NETWORK} \
-                        -e TESTCONTAINERS_RYUK_DISABLED=false \
-                        -e TESTCONTAINERS_CHECKS_DISABLE=true \
-                        -e TESTCONTAINERS_NETWORK=${DOCKER_NETWORK}
-                    """
-                }
+          agent {
+            docker {
+              image 'my-maven-with-docker'
+              args """
+                -u root \
+                -v /var/run/docker.sock:/var/run/docker.sock \
+                -v \$HOME/.m2:/root/.m2 \
+                --network=${DOCKER_NETWORK} \
+                -e TESTCONTAINERS_RYUK_DISABLED=false \
+                -e TESTCONTAINERS_CHECKS_DISABLE=true \
+                -e TESTCONTAINERS_NETWORK=${DOCKER_NETWORK}
+              """
             }
-            steps {
-                 sh '''
-                        apt-get update
-                        apt-get install -y docker.io
-                        docker info
-                        docker run --rm hello-world
-                        mvn test
-                    '''
+          }
+          steps {
+            sh 'docker --version'
+            sh 'docker run --rm hello-world'
+            sh 'mvn test'
+          }
+          post {
+            always {
+              junit 'target/surefire-reports/*.xml'
             }
-            post {
-                always {
-                    junit 'target/surefire-reports/*.xml'
-                }
-            }
+          }
         }
+
 
         // ====================== BUILD STAGE ======================
         stage('Build') {
