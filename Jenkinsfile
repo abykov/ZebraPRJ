@@ -36,6 +36,8 @@ pipeline {
                 }
             }
             steps {
+                sh 'docker run --rm hello-world'
+                sh 'docker info'
                 sh 'mvn test'
             }
             post {
