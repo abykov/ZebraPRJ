@@ -36,11 +36,13 @@ pipeline {
                 }
             }
             steps {
-            apt-get update
-                    apt-get install -y docker.io
-                sh 'docker info'
-                sh 'docker run --rm hello-world'
-                sh 'mvn test'
+                 sh '''
+                        apt-get update
+                        apt-get install -y docker.io
+                        docker info
+                        docker run --rm hello-world
+                        mvn test
+                    '''
             }
             post {
                 always {
