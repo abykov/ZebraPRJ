@@ -11,6 +11,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 cleanWs()
@@ -18,32 +19,33 @@ pipeline {
             }
         }
 
+        // ====================== TESTING STAGE ======================
         stage('Run Tests') {
-          agent {
-            docker {
-              image 'maven:3.8.3-openjdk-17'
-              args """
-                -u root \
-                -v /var/run/docker.sock:/var/run/docker.sock \
-                -v $HOME/.m2:/root/.m2 \
-                --network=${DOCKER_NETWORK} \
-                -e TESTCONTAINERS_RYUK_DISABLED=false \
-                -e TESTCONTAINERS_CHECKS_DISABLE=true \
-                -e TESTCONTAINERS_NETWORK=${DOCKER_NETWORK}
-              """
+            agent {
+                docker {
+                    image 'maven:3.8.3-openjdk-17'
+                    args """
+                        -u root \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        -v $HOME/.m2:/root/.m2 \
+                        --network=${DOCKER_NETWORK} \
+                        -e TESTCONTAINERS_RYUK_DISABLED=false \
+                        -e TESTCONTAINERS_CHECKS_DISABLE=true \
+                        -e TESTCONTAINERS_NETWORK=${DOCKER_NETWORK}
+                    """
+                }
             }
-          }
-          steps {
-            sh 'mvn test'
-          }
-          post {
-            always {
-              junit 'target/surefire-reports/*.xml'
+            steps {
+                sh 'mvn test'
             }
-          }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
         }
 
-
+        // ====================== BUILD STAGE ======================
         stage('Build') {
             agent {
                 docker {
@@ -57,6 +59,7 @@ pipeline {
             }
         }
 
+        // ====================== BUILD DOCKER IMAGE STAGE ======================
         stage('Build Docker Image') {
             steps {
                 unstash 'jar-artifact'
@@ -67,6 +70,7 @@ pipeline {
             }
         }
 
+        // ====================== DEPLOY STAGE ======================
         stage('Deploy') {
             steps {
                 sh """
@@ -84,11 +88,12 @@ pipeline {
             }
         }
 
+        // ====================== VERIFY STAGE ======================
         stage('Verify') {
             steps {
                 sleep(time: 15, unit: 'SECONDS')
                 sh """
-                    ${DOCKER_PATH} ps --filter name=${CONTAINER_NAME}
+                    docker ps --filter name=${CONTAINER_NAME}
                     curl -f http://localhost:${APP_PORT}/hello || echo "Service not responding"
                 """
             }
