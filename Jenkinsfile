@@ -36,6 +36,8 @@ pipeline {
                 }
             }
             steps {
+            apt-get update
+                    apt-get install -y docker.io
                 sh 'docker info'
                 sh 'docker run --rm hello-world'
                 sh 'mvn test'
