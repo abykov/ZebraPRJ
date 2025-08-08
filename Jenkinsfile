@@ -89,6 +89,7 @@ pipeline {
                         -e SPRING_PROFILES_ACTIVE=docker \
                         ${DOCKER_IMAGE}:latest
                 """
+                sh 'docker ps'
             }
         }
 
