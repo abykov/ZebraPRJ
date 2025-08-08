@@ -21,39 +21,42 @@ pipeline {
 
         // ====================== TESTING STAGE ======================
         stage('Run Tests') {
-          agent {
-            docker {
-              image 'my-maven-with-docker'
-              args """
-                -u root \
-                -v /var/run/docker.sock:/var/run/docker.sock \
-                -v \$HOME/.m2:/root/.m2 \
-                --network=${DOCKER_NETWORK} \
-                -e TESTCONTAINERS_RYUK_DISABLED=false \
-                -e TESTCONTAINERS_CHECKS_DISABLE=true \
-                -e TESTCONTAINERS_NETWORK=${DOCKER_NETWORK}
-              """
+            agent {
+                docker {
+                    image 'my-maven-with-docker'
+                    args """
+                        -u root \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        -v $HOME/.m2:/root/.m2 \
+                        --network=${DOCKER_NETWORK} \
+                        -e TESTCONTAINERS_RYUK_DISABLED=false \
+                        -e TESTCONTAINERS_CHECKS_DISABLE=true \
+                        -e TESTCONTAINERS_NETWORK=${DOCKER_NETWORK}
+                    """
+                }
             }
-          }
-          steps {
-            sh 'docker --version'
-            sh 'docker run --rm hello-world'
-            sh 'mvn test'
-          }
-          post {
-            always {
-              junit 'target/surefire-reports/*.xml'
+            steps {
+                sh 'docker --version'
+                sh 'docker run --rm hello-world'
+                sh 'mvn test'
             }
-          }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                }
+            }
         }
-
 
         // ====================== BUILD STAGE ======================
         stage('Build') {
             agent {
                 docker {
-                    image 'maven:3.8.3-openjdk-17'
-                    args '-v $HOME/.m2:/root/.m2'
+                    image 'my-maven-with-docker'
+                    args """
+                        -u root \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        -v $HOME/.m2:/root/.m2
+                    """
                 }
             }
             steps {
@@ -81,11 +84,11 @@ pipeline {
                     ${DOCKER_PATH} rm ${CONTAINER_NAME} || true
                 """
                 sh """
-                    ${DOCKER_PATH} run -d \\
-                        -p ${APP_PORT}:${APP_PORT} \\
-                        --name ${CONTAINER_NAME} \\
-                        --network ${DOCKER_NETWORK} \\
-                        -e SPRING_PROFILES_ACTIVE=docker \\
+                    ${DOCKER_PATH} run -d \
+                        -p ${APP_PORT}:${APP_PORT} \
+                        --name ${CONTAINER_NAME} \
+                        --network ${DOCKER_NETWORK} \
+                        -e SPRING_PROFILES_ACTIVE=docker \
                         ${DOCKER_IMAGE}:latest
                 """
             }
