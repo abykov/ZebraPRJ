@@ -28,10 +28,8 @@ pipeline {
                         -u root \
                         -v /var/run/docker.sock:/var/run/docker.sock \
                         -v $HOME/.m2:/root/.m2 \
-                        --network=${DOCKER_NETWORK} \
                         -e TESTCONTAINERS_RYUK_DISABLED=false \
                         -e TESTCONTAINERS_CHECKS_DISABLE=true \
-                        -e TESTCONTAINERS_NETWORK=${DOCKER_NETWORK}
                     """
                 }
             }
