@@ -39,7 +39,7 @@ pipeline {
                 sh 'echo $HOSTNAME'
                 sh 'docker --version'
                 sh 'docker run --rm hello-world'
-                sh 'sleep 5m'
+                sh 'docker run --rm --network=${DOCKER_NETWORK} alpine sh -c "apk add --no-cache curl && curl https://index.docker.io/v1/"'
                 sh 'mvn test'
             }
             post {
