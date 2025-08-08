@@ -36,6 +36,7 @@ pipeline {
                 }
             }
             steps {
+                sh 'echo $HOSTNAME'
                 sh 'docker --version'
                 sh 'docker run --rm hello-world'
                 sh 'mvn test'
