@@ -28,7 +28,6 @@ pipeline {
                         -u root \
                         -v /var/run/docker.sock:/var/run/docker.sock \
                         -v $HOME/.m2:/root/.m2 \
-                        -e TESTCONTAINERS_RYUK_DISABLED=false \
                         -e TESTCONTAINERS_CHECKS_DISABLE=true \
                     """
                 }
@@ -89,21 +88,15 @@ pipeline {
                         -e SPRING_PROFILES_ACTIVE=docker \
                         ${DOCKER_IMAGE}:latest
                 """
-                // Add a short wait to allow container to start and possibly crash
-                sh 'sleep 5'
-
-                // Show logs even if container exited
-                sh "${DOCKER_PATH} logs ${CONTAINER_NAME} || echo 'No logs available'"
-                sh 'docker ps'
             }
         }
 
         // ====================== VERIFY STAGE ======================
         stage('Verify') {
             steps {
-                sleep(time: 20, unit: 'SECONDS')
+                sleep(time: 30, unit: 'SECONDS')
                 sh """
-                    docker ps --filter name=${CONTAINER_NAME}
+                    docker ps
                     curl -f http://localhost:${APP_PORT}/hello || echo "Service not responding"
                 """
             }
