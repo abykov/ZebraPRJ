@@ -89,7 +89,11 @@ pipeline {
                         -e SPRING_PROFILES_ACTIVE=docker \
                         ${DOCKER_IMAGE}:latest
                 """
-                sh 'docker logs zebra-prj'
+                // Add a short wait to allow container to start and possibly crash
+                sh 'sleep 5'
+
+                // Show logs even if container exited
+                sh "${DOCKER_PATH} logs ${CONTAINER_NAME} || echo 'No logs available'"
                 sh 'docker ps'
             }
         }
@@ -97,7 +101,7 @@ pipeline {
         // ====================== VERIFY STAGE ======================
         stage('Verify') {
             steps {
-                sleep(time: 15, unit: 'SECONDS')
+                sleep(time: 20, unit: 'SECONDS')
                 sh """
                     docker ps --filter name=${CONTAINER_NAME}
                     curl -f http://localhost:${APP_PORT}/hello || echo "Service not responding"
