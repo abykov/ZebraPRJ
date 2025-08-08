@@ -19,7 +19,7 @@ pipeline {
             }
         }
 
-        // ====================== TESTING STAGE ======================
+        // ====================== TESTING STAGE =====================
         stage('Run Tests') {
             agent {
                 docker {
