@@ -39,6 +39,7 @@ pipeline {
                 sh 'echo $HOSTNAME'
                 sh 'docker --version'
                 sh 'docker run --rm hello-world'
+                sh 'sleep 5m'
                 sh 'mvn test'
             }
             post {
