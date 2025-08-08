@@ -28,7 +28,6 @@ pipeline {
                         -u root \
                         -v /var/run/docker.sock:/var/run/docker.sock \
                         -v $HOME/.m2:/root/.m2 \
-                        -e TESTCONTAINERS_CHECKS_DISABLE=true \
                     """
                 }
             }
