@@ -191,4 +191,56 @@ public class ZebraPrjController {
         }
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping(value = "/crazy", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Crazy GET endpoint with body parameters",
+            description = "Accepts JSON body on a GET request. If 'name' is provided → returns user(s) with that name. " +
+                    "If 'id' is provided → deletes the user with that ID."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Operation completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request body"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<Map<String, Object>> crazyGet(@RequestBody(required = false) Map<String, Object> params) {
+        if (params == null || params.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Request body must contain 'name' or 'id'"));
+        }
+
+        Map<String, Object> response = new HashMap<>();
+
+        // Case 1: Find by name
+        if (params.containsKey("name")) {
+            String name = params.get("name").toString();
+            List<User> users = userRepository.findByName(name);
+            if (users.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "No user found with name '" + name + "'"));
+            }
+            response.put("foundUsers", users);
+            return ResponseEntity.ok(response);
+        }
+
+        // Case 2: Delete by ID
+        if (params.containsKey("id")) {
+            try {
+                Long id = Long.valueOf(params.get("id").toString());
+                if (!userRepository.existsById(id)) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(Map.of("error", "User with ID " + id + " not found"));
+                }
+                userRepository.deleteById(id);
+                response.put("message", "User with ID " + id + " deleted successfully");
+                return ResponseEntity.ok(response);
+            } catch (NumberFormatException e) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "'id' must be a valid number"));
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Request body must contain either 'name' or 'id'"));
+    }
 }
