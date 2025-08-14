@@ -21,7 +21,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.DockerClientFactory;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,6 +36,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 // 2. Override ddl-auto to have Hibernate create the schema for us in the fresh container
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=create-drop")
 class ZebraPrjControllerTest {
+
+
+
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
@@ -49,6 +55,7 @@ class ZebraPrjControllerTest {
     private final String invalidEndpoint = "/invalid";
     private final String usersEndpoint = "/users";
 
+    public static final String DELETEUSER_ENDPOINT = "/deleteuser";
 
     @BeforeAll
     static void init() {
@@ -79,7 +86,7 @@ class ZebraPrjControllerTest {
     void testGetHelloContentType() {
         ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
-        assertThat(response.getHeaders().getContentType().toString()).isEqualTo("text/plain;charset=UTF-8");
+        assertThat(response.getHeaders().getContentType().toString()).hasToString("text/plain;charset=UTF-8");
     }
 
     @Test
@@ -129,10 +136,57 @@ class ZebraPrjControllerTest {
     void testPostNewUserSuccess() {
         User newUser = new User(null, "Avraam Linkoln", "Avraam@mail.ru", LocalDate.of(1809, 2, 12));
 
-        // You would typically make a POST call here, but since the controller method
+        // We can typically make a POST call here, but since the controller method
         // is designed to work with userRepository.save, this is a valid test of the underlying logic.
         User savedUser = userRepository.save(newUser);
         assertNotNull(savedUser.getId());
         assertEquals("Avraam Linkoln", savedUser.getName());
+    }
+
+    @Test
+    @DisplayName("DELETE via GET " + DELETEUSER_ENDPOINT + "/{id} removes the user")
+    @Tag("Positive")
+    void testDeleteUserByIdGet(){
+        //Get ID of first test user (created with @before each)
+        Long testUserID = userRepository.findAll().get(0).getId();
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/deleteuser/" + testUserID,
+                HttpMethod.GET,
+                null,
+                Map.class
+        );
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(userRepository.existsById(testUserID)).isFalse();
+    }
+
+    @Test
+    @DisplayName("POST /deleteuser with name removes matching users")
+    @Tag("Positive")
+    void testDeleteUserByNamePost(){
+        String testUserName = userRepository.findAll().get(0).getName();
+        List<Map<String,Object>> request = Arrays.asList(Map.of("name",testUserName));
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                DELETEUSER_ENDPOINT,
+                request,
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(userRepository.findByName(testUserName)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("POST /deleteuser non-existing ID")
+    @Tag("Negative")
+    void testDeleteUserNotExistingIdPost(){
+        List<Map<String,Object>> request = Arrays.asList(Map.of("id",999));
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                DELETEUSER_ENDPOINT,
+                request,
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getBody()).containsKey("errors");
     }
 }
