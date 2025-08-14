@@ -20,6 +20,7 @@ import java.util.*;
 @Tag(name = "ZebraAPI", description = "API for Zebra application")
 public class ZebraPrjController {
 
+    public static final String ERROR = "error";
     private final UserRepository userRepository;
 
     public ZebraPrjController(UserRepository userRepository){
@@ -89,7 +90,7 @@ public class ZebraPrjController {
     public ResponseEntity<Map<String, Object>> getToDeleteUserById(@PathVariable Long id){
         if(!userRepository.existsById(id)){
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error","User with ID " + id + " not found"));
+                    .body(Map.of(ERROR,"User with ID " + id + " not found"));
         }
         userRepository.deleteById(id);
         return ResponseEntity.status(HttpStatus.OK)
@@ -206,7 +207,7 @@ public class ZebraPrjController {
     public ResponseEntity<Map<String, Object>> crazyGet(@RequestBody(required = false) Map<String, Object> params) {
         if (params == null || params.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Request body must contain 'name' or 'id'"));
+                    .body(Map.of(ERROR, "Request body must contain 'name' or 'id'"));
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -217,7 +218,7 @@ public class ZebraPrjController {
             List<User> users = userRepository.findByName(name);
             if (users.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "No user found with name '" + name + "'"));
+                        .body(Map.of(ERROR, "No user found with name '" + name + "'"));
             }
             response.put("foundUsers", users);
             return ResponseEntity.ok(response);
@@ -229,18 +230,18 @@ public class ZebraPrjController {
                 Long id = Long.valueOf(params.get("id").toString());
                 if (!userRepository.existsById(id)) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(Map.of("error", "User with ID " + id + " not found"));
+                            .body(Map.of(ERROR, "User with ID " + id + " not found"));
                 }
                 userRepository.deleteById(id);
                 response.put("message", "User with ID " + id + " deleted successfully");
                 return ResponseEntity.ok(response);
             } catch (NumberFormatException e) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("error", "'id' must be a valid number"));
+                        .body(Map.of(ERROR, "'id' must be a valid number"));
             }
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", "Request body must contain either 'name' or 'id'"));
+                .body(Map.of(ERROR, "Request body must contain either 'name' or 'id'"));
     }
 }

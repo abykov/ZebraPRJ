@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @Testcontainers
 // 2. Override ddl-auto to have Hibernate create the schema for us in the fresh container
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=create-drop")
-public class ZebraPrjControllerTest {
+class ZebraPrjControllerTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine");
@@ -67,7 +67,7 @@ public class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check GET /hello returns 200 and 'Hello'")
     @Tag("Positive")
-    public void testGetHelloSuccess() {
+    void testGetHelloSuccess() {
         ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).isEqualTo(helloBody);
@@ -76,7 +76,7 @@ public class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check Content-Type for GET /hello")
     @Tag("Positive")
-    public void testGetHelloContentType() {
+    void testGetHelloContentType() {
         ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getHeaders().getContentType().toString()).isEqualTo("text/plain;charset=UTF-8");
@@ -85,7 +85,7 @@ public class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check response time for GET /hello")
     @Tag("Positive")
-    public void testGetHelloResponseTime() {
+    void testGetHelloResponseTime() {
         long startTime = System.currentTimeMillis();
         restTemplate.getForEntity(helloEndpoint, String.class);
         long elapsedTime = System.currentTimeMillis() - startTime;
@@ -95,7 +95,7 @@ public class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check GET /invalid returns 404")
     @Tag("Negative")
-    public void testGetInvalidEndpoint() {
+    void testGetInvalidEndpoint() {
         ResponseEntity<String> response = restTemplate.getForEntity(invalidEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(404);
     }
@@ -103,7 +103,7 @@ public class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check POST /hello returns 405")
     @Tag("Negative")
-    public void testPostHelloMethodNotAllowed() {
+    void testPostHelloMethodNotAllowed() {
         ResponseEntity<String> response = restTemplate.postForEntity(helloEndpoint, null, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(405);
     }
@@ -111,7 +111,7 @@ public class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check GET /users returns 200 and correct data")
     @Tag("Positive")
-    public void testGetUsersSuccess() {
+    void testGetUsersSuccess() {
         ResponseEntity<List<User>> response = restTemplate.exchange(
                 usersEndpoint,
                 HttpMethod.GET,
@@ -126,7 +126,7 @@ public class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check POST /users adds a new user")
     @Tag("Positive")
-    public void testPostNewUserSuccess() {
+    void testPostNewUserSuccess() {
         User newUser = new User(null, "Avraam Linkoln", "Avraam@mail.ru", LocalDate.of(1809, 2, 12));
 
         // You would typically make a POST call here, but since the controller method
