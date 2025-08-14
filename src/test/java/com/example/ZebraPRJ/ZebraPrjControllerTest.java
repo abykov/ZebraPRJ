@@ -74,7 +74,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check GET /hello returns 200 and 'Hello'")
     @Tag("Positive")
-    void testGetHelloSuccess() {
+    void testGETHelloSuccess() {
         ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).isEqualTo(helloBody);
@@ -83,7 +83,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check Content-Type for GET /hello")
     @Tag("Positive")
-    void testGetHelloContentType() {
+    void testGETHelloContentType() {
         ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getHeaders().getContentType().toString()).hasToString("text/plain;charset=UTF-8");
@@ -92,7 +92,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check response time for GET /hello")
     @Tag("Positive")
-    void testGetHelloResponseTime() {
+    void testGETHelloResponseTime() {
         long startTime = System.currentTimeMillis();
         restTemplate.getForEntity(helloEndpoint, String.class);
         long elapsedTime = System.currentTimeMillis() - startTime;
@@ -102,7 +102,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check GET /invalid returns 404")
     @Tag("Negative")
-    void testGetInvalidEndpoint() {
+    void testGETInvalidEndpoint() {
         ResponseEntity<String> response = restTemplate.getForEntity(invalidEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(404);
     }
@@ -110,7 +110,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check POST /hello returns 405")
     @Tag("Negative")
-    void testPostHelloMethodNotAllowed() {
+    void testPOSTHelloMethodNotAllowed() {
         ResponseEntity<String> response = restTemplate.postForEntity(helloEndpoint, null, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(405);
     }
@@ -118,7 +118,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check GET /users returns 200 and correct data")
     @Tag("Positive")
-    void testGetUsersSuccess() {
+    void testGETUsersSuccess() {
         ResponseEntity<List<User>> response = restTemplate.exchange(
                 usersEndpoint,
                 HttpMethod.GET,
@@ -133,7 +133,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("Check POST /users adds a new user")
     @Tag("Positive")
-    void testPostNewUserSuccess() {
+    void testPOSTNewUserSuccess() {
         User newUser = new User(null, "Avraam Linkoln", "Avraam@mail.ru", LocalDate.of(1809, 2, 12));
 
         // We can typically make a POST call here, but since the controller method
@@ -146,7 +146,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("DELETE via GET " + DELETEUSER_ENDPOINT + "/{id} removes the user")
     @Tag("Positive")
-    void testDeleteUserByIdGet(){
+    void testDeleteUserByIdGET(){
         //Get ID of first test user (created with @before each)
         Long testUserID = userRepository.findAll().get(0).getId();
         ResponseEntity<Map> response = restTemplate.exchange(
@@ -162,7 +162,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("POST /deleteuser with name removes matching users")
     @Tag("Positive")
-    void testDeleteUserByNamePost(){
+    void testDeleteUserByNamePOST(){
         String testUserName = userRepository.findAll().get(0).getName();
         List<Map<String,Object>> request = Arrays.asList(Map.of("name",testUserName));
         ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -178,7 +178,7 @@ class ZebraPrjControllerTest {
     @Test
     @DisplayName("POST /deleteuser non-existing ID")
     @Tag("Negative")
-    void testDeleteUserNotExistingIdPost(){
+    void testDeleteUserNotExistingIdPOST(){
         List<Map<String,Object>> request = Arrays.asList(Map.of("id",999));
         ResponseEntity<Map> response = restTemplate.postForEntity(
                 DELETEUSER_ENDPOINT,
@@ -188,5 +188,73 @@ class ZebraPrjControllerTest {
 
         assertThat(response.getStatusCode().value()).isEqualTo(404);
         assertThat(response.getBody()).containsKey("errors");
+    }
+
+    @Test
+    @DisplayName("DELETE /users. ID in URL (/users?id=xx)")
+    @Tag("Positive")
+    void testDeleteUserNonExistingIdInUrlDELETE(){
+        Long testUserID = userRepository.findAll().get(0).getId();
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/users?id=" + testUserID,
+                HttpMethod.DELETE,
+                null,
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(userRepository.existsById(testUserID)).isFalse();
+    }
+
+    @Test
+    @DisplayName("DELETE /users. ID in URL of not existing user (/users?id=xx)")
+    @Tag("Negative")
+    void testDeleteUserByIdInUrlDELETE(){
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/users?id=777",
+                HttpMethod.DELETE,
+                null,
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+    }
+
+    @Test
+    @DisplayName("DELETE /users. ID in body")
+    @Tag("Positive")
+    void testDeleteUserByIdInBodyDELETE(){
+        Long testUserID = userRepository.findAll().get(0).getId();
+        List<Map<String,Object>> request = Arrays.asList(Map.of("id",testUserID));
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/users",
+                HttpMethod.DELETE,
+                new org.springframework.http.HttpEntity<>(request),
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(userRepository.findById(testUserID)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("DELETE /users. ID in body")
+    @Tag("Negative")
+    void testDeleteUserNonExistingIdInBodyDELETE(){
+        Long nonExistingUserID = 999L;
+        List<Map<String,Object>> request = Arrays.asList(Map.of("id",nonExistingUserID));
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/users",
+                HttpMethod.DELETE,
+                new org.springframework.http.HttpEntity<>(request),
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getBody()).containsKey("errors");
+        assertThat(response.getBody().get("errors").toString())
+                .contains("User with ID " + nonExistingUserID + " not found");
     }
 }
