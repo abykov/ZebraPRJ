@@ -166,12 +166,12 @@ public class ZebraPrjController {
          if (id == null && requestList != null && !requestList.isEmpty()) {
             for(Map<String, Object> entity : requestList) {
                 if (entity.containsKey("id")) {
-                     Long UserId = Long.valueOf(entity.get("id").toString());
-                    if(userRepository.existsById(UserId)){
-                        userRepository.deleteById(UserId);
-                        deleted.add("User with ID " + UserId + " deleted successfully (body)");
+                     Long userId = Long.valueOf(entity.get("id").toString());
+                    if(userRepository.existsById(userId)){
+                        userRepository.deleteById(userId);
+                        deleted.add("User with ID " + userId + " deleted successfully (body)");
                     } else {
-                        errors.add("User with ID " + UserId + " not found (body)");
+                        errors.add("User with ID " + userId + " not found (body)");
                     }
                 }
             }
