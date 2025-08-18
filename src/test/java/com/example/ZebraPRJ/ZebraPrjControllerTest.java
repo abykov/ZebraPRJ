@@ -257,4 +257,116 @@ class ZebraPrjControllerTest {
         assertThat(response.getBody().get("errors").toString())
                 .contains("User with ID " + nonExistingUserID + " not found");
     }
+
+    @Test
+    @DisplayName("GET /crazy. Correct ID in body - deletes user")
+    @Tag("Positive")
+    void testCrazyGetWithCorrectIdDeletesUser(){
+        // Get ID of first test user
+        Long testUserId = userRepository.findAll().get(0).getId();
+        Map<String, Object> request = Map.of("id", testUserId);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/crazy",
+                HttpMethod.GET,
+                new org.springframework.http.HttpEntity<>(request),
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).containsEntry("message", "User with ID " + testUserId + " deleted successfully");
+        assertThat(userRepository.existsById(testUserId)).isFalse();
+    }
+
+    @Test
+    @DisplayName("GET /crazy. Non-existing ID in body - user not found")
+    @Tag("Negative")
+    void testCrazyGetWithNonExistingIdUserNotFound() {
+        Long nonExistingUserID = 999L;
+        Map<String, Object> request = Map.of("id", nonExistingUserID);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/crazy",
+                HttpMethod.GET,
+                new org.springframework.http.HttpEntity<>(request),
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getBody()).containsEntry("error", "User with ID " + nonExistingUserID + " not found");
+    }
+
+        @Test
+        @DisplayName("GET /crazy. Valid username in body - returns user")
+        @Tag("Positive")
+        void testCrazyGetWithValidUsername(){
+            String testUserName = userRepository.findAll().get(0).getName();
+            Map<String, Object> request = Map.of("name", testUserName);
+
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    "/crazy",
+                    HttpMethod.GET,
+                    new org.springframework.http.HttpEntity<>(request),
+                    Map.class
+            );
+
+            assertThat(response.getStatusCode().value()).isEqualTo(200);
+            assertThat(response.getBody()).containsKey("foundUsers");
+
+            @SuppressWarnings("unchecked")
+                    List<User> foundUsers = (List<User>) response.getBody().get("foundUsers");
+            assertThat(foundUsers).hasSize(1);
+            assertThat(foundUsers.get(0).getName()).isEqualTo(testUserName);
+        }
+
+    @Test
+    @DisplayName("GET /crazy. Non-existing username - user not found")
+    @Tag("Negative")
+    void testCrazyGetWithNonExistingUsername(){
+        String testUserName = "NonExistingUser";
+        Map<String, Object> request = Map.of("name", testUserName);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/crazy",
+                HttpMethod.GET,
+                new org.springframework.http.HttpEntity<>(request),
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getBody()).containsEntry("error", "No user found with name '" + testUserName + "'");
+    }
+
+    @Test
+    @DisplayName("GET /crazy. Empty body - error 400")
+    @Tag("Negative")
+    void testCrazyGetWithEmptyBody(){
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/crazy",
+                HttpMethod.GET,
+                new org.springframework.http.HttpEntity<>(Map.of()),
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).containsEntry("error", "Request body must contain 'name' or 'id'");
+    }
+
+    @Test
+    @DisplayName("GET /crazy. Invalid ID format - error 400")
+    @Tag("Negative")
+    void testCrazyGetInvalidIdFormat() {
+        Map<String, Object> request = Map.of("id", "not-a-number");
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/crazy",
+                HttpMethod.GET,
+                new org.springframework.http.HttpEntity<>(request),
+                Map.class
+        );
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).containsEntry("error", "'id' must be a valid number");
+    }
 }
