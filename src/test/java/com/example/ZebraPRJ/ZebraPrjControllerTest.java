@@ -274,17 +274,15 @@ class ZebraPrjControllerTest {
     void testCrazyGetWithCorrectIdDeletesUser(){
         // Get ID of first test user
         Long testUserId = userRepository.findAll().get(0).getId();
-        Map<String, Object> request = Map.of("id", testUserId);
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("id", testUserId))
+        .when()
+                .get("/crazy")
+        .then()
+                .statusCode(200)
+                .body("message", equalTo("User with ID " + testUserId + " deleted successfully"));
 
-        ResponseEntity<Map> response = restTemplate.exchange(
-                "/crazy",
-                HttpMethod.GET,
-                new org.springframework.http.HttpEntity<>(request),
-                Map.class
-        );
-
-        assertThat(response.getStatusCode().value()).isEqualTo(200);
-        assertThat(response.getBody()).containsEntry("message", "User with ID " + testUserId + " deleted successfully");
         assertThat(userRepository.existsById(testUserId)).isFalse();
     }
 
@@ -308,29 +306,19 @@ class ZebraPrjControllerTest {
         @Tag("Positive")
         void testCrazyGetWithValidUsername(){
             String testUserName = userRepository.findAll().get(0).getName();
-//            given()
-//                    .contentType(ContentType.JSON)
-//                    .body(Map.of("name", testUserName))
-//            .when()
-//                    .get("/crazy")
-//            .then()
-//                    .statusCode(200)
-//                    .body()
-            Map<String, Object> request = Map.of("name", testUserName);
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    "/crazy",
-                    HttpMethod.GET,
-                    new org.springframework.http.HttpEntity<>(request),
-                    Map.class
-            );
+            var response =
+                    given()
+                            .contentType(ContentType.JSON)
+                            .body(Map.of("name", testUserName))
+                    .when()
+                            .get("/crazy")
+                    .then()
+                            .statusCode(200)
+                    .extract();
 
-            assertThat(response.getStatusCode().value()).isEqualTo(200);
-            assertThat(response.getBody()).containsKey("foundUsers");
-
-            @SuppressWarnings("unchecked")
-                    List<User> foundUsers = (List<User>) response.getBody().get("foundUsers");
+            List<Map<String, Object>> foundUsers = response.path("foundUsers");
             assertThat(foundUsers).hasSize(1);
-            assertThat(foundUsers.get(0).getName()).isEqualTo(testUserName);
+            assertThat(foundUsers.get(0).get("name")).isEqualTo(testUserName);
         }
 
     @Test
