@@ -134,13 +134,13 @@ class ZebraPrjControllerTest {
     @DisplayName("Check POST /users adds a new user")
     @Tag("Positive")
     void testPOSTNewUserSuccess() {
-        User newUser = new User(null, "Avraam Linkoln", "Avraam@mail.ru", LocalDate.of(1809, 2, 12));
+        User newUser = new User(null, "Abraham Lincoln", "Avraam@mail.ru", LocalDate.of(1809, 2, 12));
 
         // We can typically make a POST call here, but since the controller method
         // is designed to work with userRepository.save, this is a valid test of the underlying logic.
         User savedUser = userRepository.save(newUser);
         assertNotNull(savedUser.getId());
-        assertEquals("Avraam Linkoln", savedUser.getName());
+        assertEquals("Abraham Lincoln", savedUser.getName());
     }
 
     @Test
