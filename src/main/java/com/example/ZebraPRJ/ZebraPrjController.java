@@ -143,7 +143,7 @@ public class ZebraPrjController {
     @Operation(summary = "Delete user by ID", description = "Delete a user using query param ?id=xx or JSON body with {id:xx}")
     @ApiResponses(value ={
             @ApiResponse(responseCode = "200", description = "User deleted successfully"),
-            @ApiResponse(responseCode = "500", description = "Param ID is not present in request"),
+            @ApiResponse(responseCode = "400", description = "Param ID is not present in request"),
             @ApiResponse(responseCode = "404", description = "Users not found")
     })
     public ResponseEntity<Map<String, Object>> deleteUser (
