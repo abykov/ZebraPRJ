@@ -2,6 +2,8 @@ package com.example.ZebraPRJ;
 
 import com.example.ZebraPRJ.model.User;
 import com.example.ZebraPRJ.repository.UserRepository;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,9 +12,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -25,7 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.equalTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,6 +52,9 @@ class ZebraPrjControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @LocalServerPort
+    private int port;
+
     @Autowired
     private TestRestTemplate restTemplate;
 
@@ -66,6 +74,8 @@ class ZebraPrjControllerTest {
     // 4. Use @BeforeEach to ensure a clean database state for each test
     @BeforeEach
     void setUp() {
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = port;
         userRepository.deleteAll();
         userRepository.save(new User(null, "Alice Smith", "alice@example.com", LocalDate.of(1999, 1, 1)));
         userRepository.save(new User(null, "Bob Johnson", "bob@example.com", LocalDate.of(1994, 2, 15)));
@@ -283,17 +293,14 @@ class ZebraPrjControllerTest {
     @Tag("Negative")
     void testCrazyGetWithNonExistingIdUserNotFound() {
         Long nonExistingUserID = 999L;
-        Map<String, Object> request = Map.of("id", nonExistingUserID);
-
-        ResponseEntity<Map> response = restTemplate.exchange(
-                "/crazy",
-                HttpMethod.GET,
-                new org.springframework.http.HttpEntity<>(request),
-                Map.class
-        );
-
-        assertThat(response.getStatusCode().value()).isEqualTo(404);
-        assertThat(response.getBody()).containsEntry("error", "User with ID " + nonExistingUserID + " not found");
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("id", nonExistingUserID))
+        .when()
+                .get("/crazy")
+        .then()
+                .statusCode(404)
+                .body("error", equalTo("User with ID " + nonExistingUserID + " not found"));
     }
 
         @Test
@@ -301,9 +308,15 @@ class ZebraPrjControllerTest {
         @Tag("Positive")
         void testCrazyGetWithValidUsername(){
             String testUserName = userRepository.findAll().get(0).getName();
+//            given()
+//                    .contentType(ContentType.JSON)
+//                    .body(Map.of("name", testUserName))
+//            .when()
+//                    .get("/crazy")
+//            .then()
+//                    .statusCode(200)
+//                    .body()
             Map<String, Object> request = Map.of("name", testUserName);
-
-
             ResponseEntity<Map> response = restTemplate.exchange(
                     "/crazy",
                     HttpMethod.GET,
@@ -325,17 +338,14 @@ class ZebraPrjControllerTest {
     @Tag("Negative")
     void testCrazyGetWithNonExistingUsername(){
         String testUserName = "NonExistingUser";
-        Map<String, Object> request = Map.of("name", testUserName);
-
-        ResponseEntity<Map> response = restTemplate.exchange(
-                "/crazy",
-                HttpMethod.GET,
-                new org.springframework.http.HttpEntity<>(request),
-                Map.class
-        );
-
-        assertThat(response.getStatusCode().value()).isEqualTo(404);
-        assertThat(response.getBody()).containsEntry("error", "No user found with name '" + testUserName + "'");
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("name", testUserName))
+        .when()
+                .get("/crazy")
+        .then()
+                .statusCode(404)
+                .body("error", equalTo("No user found with name '" + testUserName + "'"));
     }
 
     @Test
@@ -357,16 +367,13 @@ class ZebraPrjControllerTest {
     @DisplayName("GET /crazy. Invalid ID format - error 400")
     @Tag("Negative")
     void testCrazyGetInvalidIdFormat() {
-        Map<String, Object> request = Map.of("id", "not-a-number");
-
-        ResponseEntity<Map> response = restTemplate.exchange(
-                "/crazy",
-                HttpMethod.GET,
-                new org.springframework.http.HttpEntity<>(request),
-                Map.class
-        );
-
-        assertThat(response.getStatusCode().value()).isEqualTo(400);
-        assertThat(response.getBody()).containsEntry("error", "'id' must be a valid number");
+        given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("id", "not-a-number"))
+        .when()
+                .get("/crazy")
+        .then()
+                .statusCode(400)
+                .body("error", equalTo("'id' must be a valid number"));
     }
 }
