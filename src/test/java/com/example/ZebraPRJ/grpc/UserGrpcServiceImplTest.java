@@ -26,7 +26,7 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
-        channel = ManagedChannelBuilder.forAddress("localhost", 9898)
+        channel = ManagedChannelBuilder.forAddress("localhost", 9090)
                 .usePlaintext()
                 .build();
         stub = UserGrpcServiceGrpc.newBlockingStub(channel);
@@ -93,6 +93,27 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
                 .setName("User2")
                 .setEmail("u2@example.com")
                 .setBirthdate("1992-02-02")
+                .build();
+
+        AddUserRequest request = AddUserRequest.newBuilder().setUser(userMessage).build();
+        AddUserResponse response = stub.addUser(request);
+
+        assertFalse(response.getErrorList().isEmpty());
+        assertFalse(response.hasUser());
+        assertEquals(1,userRepository.count());
+    }
+
+    @Test
+    @DisplayName("gRPC addUser returns error when name exists")
+    @Tag("GRPc")
+    @Tag("Negative")
+    public void testAddUserDuplicateName() {
+        userRepository.save(new User(null, "ExistingUser", "exists@example.com", LocalDate.of(1990, 1, 1)));
+
+        UserMessage userMessage = UserMessage.newBuilder()
+                .setName("ExistingUser")
+                .setEmail("email@example.com")
+                .setBirthdate("1993-02-02")
                 .build();
 
         AddUserRequest request = AddUserRequest.newBuilder().setUser(userMessage).build();
