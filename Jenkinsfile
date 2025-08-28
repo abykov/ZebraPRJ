@@ -6,6 +6,7 @@ pipeline {
         DOCKER_TAG = "${env.BUILD_ID}"
         CONTAINER_NAME = 'zebra-prj'
         APP_PORT = '8081'
+        GRPC_PORT = '9090'
         DOCKER_PATH = '/usr/bin/docker'
         DOCKER_NETWORK = 'jenkins_jenkins-network'
     }
@@ -82,6 +83,7 @@ pipeline {
                 sh """
                     ${DOCKER_PATH} run -d \
                         -p ${APP_PORT}:${APP_PORT} \
+                        -p ${GRPC_PORT}:${GRPC_PORT} \
                         --name ${CONTAINER_NAME} \
                         --network ${DOCKER_NETWORK} \
                         -e SPRING_PROFILES_ACTIVE=docker \
