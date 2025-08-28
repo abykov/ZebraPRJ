@@ -1,4 +1,4 @@
-package com.example.ZebraPRJ.model;
+package com.example.zebraprj.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;

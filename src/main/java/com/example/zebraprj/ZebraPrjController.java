@@ -1,7 +1,7 @@
-package com.example.ZebraPRJ;
+package com.example.zebraprj;
 
-import com.example.ZebraPRJ.model.User;
-import com.example.ZebraPRJ.repository.UserRepository;
+import com.example.zebraprj.model.User;
+import com.example.zebraprj.repository.UserRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

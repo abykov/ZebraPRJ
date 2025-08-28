@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 option java_multiple_files = true; // Generate separate classes per message
-option java_package = "com.example.ZebraPRJ.grpc"; // Package for generated classes
+option java_package = "com.example.zebraprj.grpc"; // Package for generated classes
 option java_outer_classname = "UserProto"; // Outer class name wrapper
 
 // Message representing a user

@@ -1,4 +1,4 @@
-package com.example.ZebraPRJ;
+package com.example.zebraprj;
 
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.containers.PostgreSQLContainer;

@@ -1,6 +1,6 @@
-package com.example.ZebraPRJ.repository;
+package com.example.zebraprj.repository;
 
-import com.example.ZebraPRJ.model.User;
+import com.example.zebraprj.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
