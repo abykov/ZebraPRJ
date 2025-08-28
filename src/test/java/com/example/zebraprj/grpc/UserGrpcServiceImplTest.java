@@ -1,8 +1,8 @@
-package com.example.ZebraPRJ.grpc;
+package com.example.zebraprj.grpc;
 
-import com.example.ZebraPRJ.model.User;
-import com.example.ZebraPRJ.AbstractPostgresTest;
-import com.example.ZebraPRJ.repository.UserRepository;
+import com.example.zebraprj.model.User;
+import com.example.zebraprj.AbstractPostgresTest;
+import com.example.zebraprj.repository.UserRepository;
 import io.grpc.StatusRuntimeException;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.junit.jupiter.api.*;

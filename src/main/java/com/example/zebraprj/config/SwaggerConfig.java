@@ -1,4 +1,4 @@
-package com.example.ZebraPRJ.config;
+package com.example.zebraprj.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;

@@ -1,7 +1,7 @@
-package com.example.ZebraPRJ.grpc;
+package com.example.zebraprj.grpc;
 
-import com.example.ZebraPRJ.model.User;
-import com.example.ZebraPRJ.repository.UserRepository;
+import com.example.zebraprj.model.User;
+import com.example.zebraprj.repository.UserRepository;
 import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 

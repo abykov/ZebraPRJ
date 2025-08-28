@@ -1,7 +1,7 @@
-package com.example.ZebraPRJ;
+package com.example.zebraprj;
 
-import com.example.ZebraPRJ.model.User;
-import com.example.ZebraPRJ.repository.UserRepository;
+import com.example.zebraprj.model.User;
+import com.example.zebraprj.repository.UserRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeAll;
