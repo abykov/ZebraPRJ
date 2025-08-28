@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+option java_multiple_files = true; // Generate separate classes per message
+option java_package = "com.example.ZebraPRJ.grpc"; // Package for generated classes
+option java_outer_classname = "UserProto"; // Outer class name wrapper
+
+// Message representing a user
+message UserMessage {
+  int64 id = 1; // User identifier
+  string name = 2; // Unique user name
+  string email = 3; // Unique user email
+  string birthdate = 4; // Birthdate in ISO-8601 format
+}
+
+// Request for adding a single user
+message AddUserRequest {
+  UserMessage user = 1; // User to add
+}
+
+// Response containing added user or validation errors
+message AddUserResponse {
+  UserMessage user = 1; // Added user details
+  repeated string error = 2; // List of validation errors
+}
+
+// gRPC service definition for user operations
+service UserGrpcService {
+  rpc AddUser(AddUserRequest) returns (AddUserResponse); // Creates new user
+}

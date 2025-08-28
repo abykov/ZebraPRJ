@@ -11,5 +11,5 @@ Simple REST service for managing list of users.
 - [√] Add POST /addUser
 - [√] Add DELETE /user
 - [√] Add tests for POST /addUser and DELETE /user
-- [_] Add tests for /crazy endpoint
-- [_] GRPc service
+- [√] Add tests for /crazy endpoint
+- [√] GRPc service
