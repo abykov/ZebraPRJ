@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 // 2. Override ddl-auto to have Hibernate create the schema for us in the fresh container
 @TestPropertySource(properties = "spring.jpa.hibernate.ddl-auto=create-drop")
-class ZebraPrjControllerTest extends AbstractTestNGSpringContextTests {
+class ZebraPrjControllerTest extends AbstractPostgresTest {
 
     // 3. Autowire both the repository and the TestRestTemplate
     @Autowired
