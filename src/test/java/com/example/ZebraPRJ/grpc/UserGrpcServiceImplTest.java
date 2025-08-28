@@ -3,38 +3,36 @@ package com.example.ZebraPRJ.grpc;
 import com.example.ZebraPRJ.model.User;
 import com.example.ZebraPRJ.AbstractPostgresTest;
 import com.example.ZebraPRJ.repository.UserRepository;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 
 import java.time.LocalDate;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
+@TestPropertySource(properties = {
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "grpc.server.in-process-name=test",
+        "grpc.server.port=-1",
+        "grpc.client.test.address=in-process:test"
+})
 public class UserGrpcServiceImplTest extends AbstractPostgresTest {
 
     @Autowired
     private UserRepository userRepository;
 
-    private ManagedChannel channel;
+    @GrpcClient("test")
     private UserGrpcServiceGrpc.UserGrpcServiceBlockingStub stub;
 
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
-        channel = ManagedChannelBuilder.forAddress("localhost", 9090)
-                .usePlaintext()
-                .build();
-        stub = UserGrpcServiceGrpc.newBlockingStub(channel);
-    }
-
-    @AfterEach
-    void tearDown() throws InterruptedException {
-        channel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
     }
 
     @Test
@@ -91,7 +89,7 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
 
         UserMessage userMessage = UserMessage.newBuilder()
                 .setName("User2")
-                .setEmail("u2@example.com")
+                .setEmail("exists@example.com")
                 .setBirthdate("1992-02-02")
                 .build();
 
