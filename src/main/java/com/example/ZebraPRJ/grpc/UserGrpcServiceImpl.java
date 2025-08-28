@@ -23,7 +23,7 @@ public class UserGrpcServiceImpl extends  UserGrpcServiceGrpc.UserGrpcServiceImp
         List<String> errors = new ArrayList<>();  // Collect validation errors
 
         // Validate unique name
-        if (userRepository.existsByEmail(request.getUser().getName())) {
+        if (userRepository.existsByName(request.getUser().getName())) {
             errors.add("User with name " + request.getUser().getName() + "already exists");
         }
 
