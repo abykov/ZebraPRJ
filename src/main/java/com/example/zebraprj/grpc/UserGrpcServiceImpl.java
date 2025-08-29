@@ -8,6 +8,7 @@ import net.devh.boot.grpc.server.service.GrpcService;
 import java.util.List;
 import java.util.ArrayList;
 import java.time.LocalDate;
+import java.util.stream.Collectors;
 
 // gRPC service implementation responsible for user creation
 @GrpcService // Registers this class as a gRPC service bean
@@ -60,5 +61,62 @@ public class UserGrpcServiceImpl extends  UserGrpcServiceGrpc.UserGrpcServiceImp
         responseBuilder.setUser(responseUser); // Attach user to response
         responseObserver.onNext(responseBuilder.build()); // Send successful response
         responseObserver.onCompleted(); // Finish call
+    }
+
+    @Override
+    public void getUsers(GetUsersRequest request, StreamObserver<GetUsersResponse> responseObserver) {
+        List<UserMessage> users = userRepository.findAll().stream()
+                .map(u -> UserMessage.newBuilder()
+                        .setId(u.getId())
+                        .setName(u.getName())
+                        .setEmail(u.getEmail())
+                        .setBirthdate(u.getBirthdate().toString())
+                        .build())
+                .toList();
+
+        GetUsersResponse response = GetUsersResponse.newBuilder()
+                .addAllUsers(users)
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void deleteUserByNameId (DeleteUserByNameIDRequest request,
+                                    StreamObserver<DeleteUserByNameIDResponse> responseObserver){
+        List<String> errors = new ArrayList<>();
+        List<String> deleted =  new ArrayList<>();
+
+        for(DeleteUserRequest entity : request.getRequestList()){
+            if(entity.getId() != 0) {
+                long id = entity.getId();
+                if (userRepository.existsById(id)) {
+                    userRepository.deleteById(id);
+                    deleted.add("Deleted user with ID: " + id);
+                } else {
+                    errors.add("User with ID " + id + " does not exist");
+                }
+            } else if (!entity.getName().isEmpty()) {
+                String name = entity.getName();
+                List<User> usersByName = userRepository.findByName(name);
+                if(!usersByName.isEmpty()){
+                    userRepository.deleteAll(usersByName);
+                    deleted.add("Deleted user with name: " + name);
+                } else  {
+                    errors.add("User(s) with name '" + name + "' do(es) not exist");
+                }
+            } else {
+                errors.add("Invalid request object " + entity);
+            }
+        }
+        DeleteUserByNameIDResponse.Builder responseBuilder = DeleteUserByNameIDResponse.newBuilder()
+                .addAllDelete(deleted);
+        if (!errors.isEmpty()) {
+            responseBuilder.addAllError(errors);
+        }
+
+        responseObserver.onNext(responseBuilder.build());
+        responseObserver.onCompleted();
     }
 }
