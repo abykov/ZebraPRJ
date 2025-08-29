@@ -23,7 +23,34 @@ message AddUserResponse {
   repeated string error = 2; // List of validation errors
 }
 
+// Request for retrieving all users
+message GetUsersRequest {}
+
+// Response containing list of users
+message GetUsersResponse {
+  repeated UserMessage users = 1; // All users in the system
+}
+
+// Single delete instruction that can specify either id or name
+message DeleteUserRequest {
+  int64 id = 1; // Optional user identifier
+  string name = 2; // Optional name identifier
+}
+
+// Request for deleting users by id or name
+message DeleteUserByNameIDRequest {
+  repeated DeleteUserRequest request = 1; // Delete instructions
+}
+
+// Response for delete operation
+message DeleteUserByNameIDResponse {
+  repeated string delete = 1; // Successfully deleted entries
+  repeated string error = 2; // Errors for not found or invalid requests
+}
+
 // gRPC service definition for user operations
 service UserGrpcService {
   rpc AddUser(AddUserRequest) returns (AddUserResponse); // Creates new user
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse); // Retrieves all users
+  rpc DeleteUserByNameId(DeleteUserByNameIDRequest) returns (DeleteUserByNameIDResponse); // Deletes users by id or name
 }
