@@ -138,4 +138,34 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
         assertEquals(0,userRepository.count());
     }
 
+    @Test
+    @DisplayName("gRPC getUsers returns all saved users")
+    @Tag("GRPc")
+    @Tag("Positive")
+    public void testGetUsers() {
+        userRepository.save(new User(null, "User1", "u1@example.com", LocalDate.of(1990, 1, 1)));
+        userRepository.save(new User(null, "User2", "u2@example.com", LocalDate.of(1991, 2, 2)));
+
+        GetUsersResponse response = stub.getUsers(GetUsersRequest.newBuilder().build());
+        assertEquals(2,userRepository.count());
+    }
+
+    @Test
+    @DisplayName("gRPC postToDeleteUserByNameId removes users by id and name")
+    @Tag("GRPc")
+    @Tag("Positive")
+    public void testDeleteUserByNameId() {
+        User u1 = userRepository.save(new User(null, "User1", "u1@example.com", LocalDate.of(1990, 1, 1)));
+        userRepository.save(new User(null, "User2", "u2@example.com", LocalDate.of(1991, 2, 2)));
+
+        DeleteUserByNameIDRequest request = DeleteUserByNameIDRequest.newBuilder()
+                .addRequest(DeleteUserRequest.newBuilder().setId(u1.getId()).build())
+                .addRequest(DeleteUserRequest.newBuilder().setName("User2").build())
+                .build();
+
+        DeleteUserByNameIDResponse response = stub.deleteUserByNameId(request);
+        assertEquals(2, response.getDeleteCount());
+        assertEquals(0,userRepository.count());
+    }
+
 }
