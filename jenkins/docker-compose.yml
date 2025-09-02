@@ -1,0 +1,62 @@
+services:
+  jenkins:
+    image: my-jenkins-java17:lts
+    container_name: jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - start_jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock.raw:/var/run/docker.sock
+    environment:
+      - TZ=Europe/Samara
+      # This environment variable tells Testcontainers to attach any container it creates
+      # to the 'jenkins-network'. This ensures all containers can communicate.
+      - TESTCONTAINERS_DOCKER_NETWORK=jenkins-network
+    # Assign the jenkins service to our custom network
+    networks:
+      - jenkins-network
+
+  postgres:
+    image: postgres:16
+    container_name: zebra_postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+    environment:
+      - POSTGRES_USER=zebra_user
+      - POSTGRES_PASSWORD=zebra_password
+      - POSTGRES_DB=zebra_db
+    restart: unless-stopped
+    # Assign the postgres service to our custom network as well
+    networks:
+      - jenkins-network
+
+  mongo:
+    image: mongo:6
+    container_name: zebra_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=zebra_user
+      - MONGO_INITDB_ROOT_PASSWORD=zebra_password
+      - MONGO_INITDB_DATABASE=zebra_db
+    restart: unless-stopped
+    networks:
+      - jenkins-network
+
+volumes:
+  start_jenkins_home:
+    name: start_jenkins_home
+  postgres_data:
+    name: postgres_data
+  mongo_data:
+    name: mongo_data
+
+# Define the custom network at the top level
+networks:
+  jenkins-network:
+    driver: bridge
