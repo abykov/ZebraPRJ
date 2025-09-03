@@ -98,7 +98,7 @@ pipeline {
                 sleep(time: 30, unit: 'SECONDS')
                 sh """
                     docker ps
-                    curl -f http://localhost:${APP_PORT}/hello || echo "Service not responding"
+                    curl -f http://zebra-prj:${APP_PORT}/hello || echo "Service not responding"
                 """
             }
         }
