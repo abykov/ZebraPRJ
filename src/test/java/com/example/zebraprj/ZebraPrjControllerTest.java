@@ -17,7 +17,6 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testcontainers.DockerClientFactory;
 
 import java.time.LocalDate;
