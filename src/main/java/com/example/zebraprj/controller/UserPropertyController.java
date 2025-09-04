@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@Tag(name = "UserProperty", description = "API for managing user properties")
+@Tag(name = "UserProperty", description = "API for managing user properties stored in MongoDB")
 public class UserPropertyController {
 
     private final UserPropertyRepository userPropertyRepository;
@@ -30,7 +30,7 @@ public class UserPropertyController {
     }
 
     @PostMapping(value = "/userproperty", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Add user properties", description = "Add one or more user properties")
+    @Operation(summary = "Add user properties", description = "Add one or more user properties and persist them in MongoDB")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "User property(ies) added successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid input data"),

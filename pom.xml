@@ -71,9 +71,6 @@
 			<scope>test</scope>
 			<!-- Note: Version is managed by the Spring Boot parent -->
 		</dependency>
-
-		<!-- H2 DATABASE HAS BEEN REMOVED -->
-
 		<!-- START: Testcontainers Dependencies for PostgreSQL container testing -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -90,6 +87,11 @@
 			<artifactId>postgresql</artifactId>
 			<scope>test</scope>
 		</dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <scope>test</scope>
+        </dependency>
 		<!-- END: Testcontainers Dependencies -->
         <dependency>
             <groupId>net.devh</groupId>

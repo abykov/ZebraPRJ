@@ -1,14 +1,23 @@
 package com.example.zebraprj.model;
 
-import jakarta.persistence.Id;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection =  "userproperties")
+@Schema(description = "User property information")
 public class UserProperty {
     @Id
+    @Schema(description = "Unique identifier of the user")
     private String userId;
+
+    @Schema(description = "Home address of the user")
     private String address;
+
+    @Schema(description = "Organisation the user belongs to")
     private String organisation;
+
+    @Schema(description = "User's favourite colour")
     private String favouriteColour;
 
     public UserProperty() {
