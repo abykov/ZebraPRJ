@@ -35,8 +35,7 @@ public class UserPropertyControllerTest {
     static MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:7.0.5");
 
     @Container
-    static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-alpine")
-
+    static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-alpine");
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {
