@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ import java.util.*;
 public class ZebraPrjController {
 
     private final UserRepository userRepository;
+    private static final Logger log = LoggerFactory.getLogger(ZebraPrjController.class);
 
     public ZebraPrjController(UserRepository userRepository){
         this.userRepository = userRepository;
@@ -33,6 +36,7 @@ public class ZebraPrjController {
             @ApiResponse (responseCode = "500", description = "=( Internal server error =(")
     })
     public String sayHello(){
+        log.info("sayHello called");
         return "Hello";
     }
 
@@ -44,6 +48,7 @@ public class ZebraPrjController {
             @ApiResponse(responseCode = "500", description = "=( Internal server error =(")
     })
     public List<User> getUsers(){
+        log.info("getUsers call. Fetching all users");
         return userRepository.findAll();
     }
 
@@ -56,27 +61,36 @@ public class ZebraPrjController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Map<String, Object>> addUsers(@Valid @RequestBody List<User> users){
+        log.info("addUsers call. Request to add {} users", users.size());
         List<String> errors = new ArrayList<>();
         List<User> addedUsers = new ArrayList<>();
 
         for (User user:users){
             if(userRepository.existsByName(user.getName())){
-                errors.add("User with name '" + user.getName() + "' is already registered");
+                String msg = "User with name " + user.getName() + " already exists";
+                log.warn(msg);
+                errors.add(msg);
                 continue;
             }
             if(userRepository.existsByEmail(user.getEmail())){
-                errors.add("User with email '" + user.getEmail() + "' is already registered");
+                String msg = "User with email " + user.getEmail() + " already exists";
+                log.warn(msg);
+                errors.add(msg);
                 continue;
             }
-            addedUsers.add(userRepository.save(user));
+            User saved = userRepository.save(user);
+            log.info("User with id {} saved successfully", saved);
+            addedUsers.add(saved);
         }
 
         Map<String, Object> response = new java.util.HashMap<>();
         response.put("addedUsers", addedUsers);
         if(!errors.isEmpty()){
             response.put("errors", errors);
+            log.warn("User creation finished with errors: {}", errors);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
+        log.info("Successfully added {} users", addedUsers.size());
         return ResponseEntity.ok(response);
     }
 
@@ -87,11 +101,14 @@ public class ZebraPrjController {
         @ApiResponse(responseCode = "404", description = "User not found")
     })
     public ResponseEntity<Map<String, Object>> getToDeleteUserById(@PathVariable Long id){
+        log.info("getToDeleteUserById call. Deleting user with id {} via GET", id);
         if(!userRepository.existsById(id)){
+            log.warn("User with id {} not found", id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error","User with ID " + id + " not found"));
         }
         userRepository.deleteById(id);
+        log.info("User with id {} deleted", id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(Map.of("message", "User with ID " + id + " deleted successfully"));
     }
@@ -103,6 +120,7 @@ public class ZebraPrjController {
             @ApiResponse(responseCode = "404", description = "One or more users not found")
     })
     public ResponseEntity<Map<String, Object>> postToDeleteUserByNameId(@RequestBody List<Map<String, Object>> requestList) {
+        log.info("postToDeleteUserByNameId call. Deleting users via POST request: {}", requestList);
         List<String> deleted = new ArrayList<>();
         List<String> errors = new ArrayList<>();
 
@@ -112,8 +130,11 @@ public class ZebraPrjController {
                 if(userRepository.existsById(id)){
                     userRepository.deleteById(id);
                     deleted.add("Deleted user with ID: " + id);
+                    log.info("Deleted user with id {}", id);
                 } else {
-                    errors.add("User with ID " + id + " not found");
+                    String message = "User with ID " + id + " not found";
+                    log.warn(message);
+                    errors.add(message);
                 }
 
             } else if(entity.containsKey("name")){
@@ -122,11 +143,16 @@ public class ZebraPrjController {
                 if(!userByName.isEmpty()){
                     userRepository.deleteAll(userByName);
                     deleted.add("Deleted user(s) with name '" + name + "'");
+                    log.info("Deleted user(s) with name {}", name);
                 } else {
-                    errors.add("User(s) '" + name + "' not found");
+                    String message = "User(s) '" + name + "' not found";
+                    log.warn(message);
+                    errors.add(message);
                 }
             } else {
-                errors.add("Invalid request object: " + entity);
+                String message = "Invalid request object: " + entity;
+                log.warn(message);
+                errors.add(message);
             }
         }
 
@@ -134,8 +160,10 @@ public class ZebraPrjController {
         response.put("deleted", deleted);
         if(!errors.isEmpty()){
             response.put("errors", errors);
+            log.warn("Deletion via POST encountered errors: {}", errors);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
+        log.info("Deletion via POST succeeded for {} entries", deleted.size());
         return ResponseEntity.ok(response);
     }
 
@@ -149,6 +177,7 @@ public class ZebraPrjController {
     public ResponseEntity<Map<String, Object>> deleteUser (
             @RequestParam(required = false) Long id,
             @RequestBody(required = false) List<Map<String, Object>> requestList) {
+        log.info("deleteUser call. DELETE /users called with id={} and body={} ", id, requestList);
         List<String> deleted = new ArrayList<>();
         List<String> errors = new ArrayList<>();
 
@@ -157,8 +186,11 @@ public class ZebraPrjController {
             if(userRepository.existsById(id)){
                 userRepository.deleteById(id);
                 deleted.add("User with ID " + id + " deleted successfully (query)");
+                log.info("Deleted user with id {} via query param", id);
             } else {
-                errors.add("User with ID " + id + " not found (query)");
+                String message = "User with ID " + id + " not found (query)";
+                log.warn(message);
+                errors.add(message);
             }
         }
 
@@ -170,8 +202,11 @@ public class ZebraPrjController {
                     if(userRepository.existsById(userId)){
                         userRepository.deleteById(userId);
                         deleted.add("User with ID " + userId + " deleted successfully (body)");
+                        log.info("Deleted user with id {} via body", userId);
                     } else {
-                        errors.add("User with ID " + userId + " not found (body)");
+                        String message = "User with ID " + userId + " not found (body)";
+                        log.warn(message);
+                        errors.add(message);
                     }
                 }
             }
@@ -179,6 +214,7 @@ public class ZebraPrjController {
 
         // If ID not found in query nor body
         if(errors.isEmpty() && deleted.isEmpty()){
+            log.warn("DELETE /users missing 'id' in query param or body");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).
                     body(Map.of("incorrectRequest","Missing 'id' in query param or request body"));
         }
@@ -187,8 +223,10 @@ public class ZebraPrjController {
         response.put("deleted", deleted);
         if(!errors.isEmpty()){
             response.put("errors", errors);
+            log.warn("DELETE /users completed with errors: {}", errors);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
+        log.info("DELETE /users removed {} users", deleted.size());
         return ResponseEntity.ok(response);
     }
 
@@ -204,7 +242,9 @@ public class ZebraPrjController {
             @ApiResponse(responseCode = "404", description = "User not found")
     })
     public ResponseEntity<Map<String, Object>> crazyGet(@RequestBody(required = false) Map<String, Object> params) {
+        log.info("crazyGet called with params {}", params);
         if (params == null || params.isEmpty()) {
+            log.warn("crazyGet missing required parameters");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Request body must contain 'name' or 'id'"));
         }
@@ -216,10 +256,12 @@ public class ZebraPrjController {
             String name = params.get("name").toString();
             List<User> users = userRepository.findByName(name);
             if (users.isEmpty()) {
+                log.warn("No user found with name {}", name);
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(Map.of("error", "No user found with name '" + name + "'"));
             }
             response.put("foundUsers", users);
+            log.info("Found {} users with name {}", users.size(), name);
             return ResponseEntity.ok(response);
         }
 
@@ -228,18 +270,22 @@ public class ZebraPrjController {
             try {
                 Long id = Long.valueOf(params.get("id").toString());
                 if (!userRepository.existsById(id)) {
+                    log.warn("User with id {} not found", id);
                     return ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(Map.of("error", "User with ID " + id + " not found"));
                 }
                 userRepository.deleteById(id);
                 response.put("message", "User with ID " + id + " deleted successfully");
+                log.info("Deleted user with id {} via crazyGet", id);
                 return ResponseEntity.ok(response);
             } catch (NumberFormatException e) {
+                log.warn("Invalid id format in crazyGet: {}", params.get("id"));
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("error", "'id' must be a valid number"));
             }
         }
 
+        log.warn("crazyGet request missing both 'name' and 'id'");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", "Request body must contain either 'name' or 'id'"));
     }

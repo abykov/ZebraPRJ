@@ -16,6 +16,8 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,8 +39,12 @@ public class UserPropertyControllerTest {
     @Container
     static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-alpine");
 
+    private static final Logger log = LoggerFactory.getLogger(UserPropertyControllerTest.class);
+
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {
+        log.info("Initializing containers: Mongo={}, Postgres={}",
+                mongoDBContainer.getDockerImageName(), postgreSQLContainer.getDockerImageName());
         registry.add("spring.data.mongodb.uri", mongoDBContainer::getConnectionString);
         registry.add("spring.datasource.url", postgreSQLContainer::getJdbcUrl);
         registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
@@ -55,6 +61,7 @@ public class UserPropertyControllerTest {
     @Tag("Positive")
     @Tag("Mongo")
     void postUserPropertyPersistInMongoDB() throws Exception {
+        log.info("Running postUserPropertyPersistInMongoDB");
         String body = "{\"userId\":\"42\",\"address\":\"Main\",\"organisation\":\"Org\",\"favouriteColour\":\"green\"}";
 
         mockMvc.perform(post("/userproperty")

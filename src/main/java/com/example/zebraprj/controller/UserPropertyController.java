@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +25,7 @@ public class UserPropertyController {
 
     private final UserPropertyRepository userPropertyRepository;
     private final ObjectMapper objectMapper;
+    private static final Logger log = LoggerFactory.getLogger(UserPropertyController.class);
 
     public UserPropertyController(UserPropertyRepository userPropertyRepository, ObjectMapper objectMapper) {
         this.userPropertyRepository = userPropertyRepository;
@@ -37,6 +40,7 @@ public class UserPropertyController {
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<?> addUserProperty(@RequestBody Object body) {
+        log.info("Received request to add user property: {}", body);
         try{
             List<UserProperty> toSave = new ArrayList<>();
             if (body instanceof List) {
@@ -49,8 +53,10 @@ public class UserPropertyController {
             for (UserProperty property : toSave) {
                 saved.add(userPropertyRepository.save(property));
             }
+            log.info("Saved {} user properties", saved.size());
             return ResponseEntity.ok(saved);
         } catch (IllegalArgumentException e) {
+            log.warn("Invalid request body", e);
             return ResponseEntity.badRequest().body("Invalid request body");
         }
     }

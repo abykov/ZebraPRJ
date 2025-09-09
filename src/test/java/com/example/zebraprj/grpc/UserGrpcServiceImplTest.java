@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 
@@ -30,8 +32,11 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
     @GrpcClient("test")
     private UserGrpcServiceGrpc.UserGrpcServiceBlockingStub stub;
 
+    private static final Logger log = LoggerFactory.getLogger(UserGrpcServiceImplTest.class);
+
     @BeforeEach
     void setUp() {
+        log.info("Clearing user repository before test");
         userRepository.deleteAll();
     }
 
@@ -40,6 +45,7 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
     @Tag("GRPc")
     @Tag("Positive")
     public void testAddUserSuccess() {
+        log.info("Running testAddUserSuccess");
         UserMessage userMessage = UserMessage.newBuilder()
                 .setName("John Doe")
                 .setEmail("john@example.com")
@@ -60,6 +66,7 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
     @Tag("GRPc")
     @Tag("Positive")
     public void testAddMultipleUserSuccess() {
+        log.info("Running testAddMultipleUserSuccess");
         AddUserResponse first = stub.addUser(AddUserRequest.newBuilder().setUser(
                 UserMessage.newBuilder()
                         .setName("User1")
@@ -85,6 +92,7 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
     @Tag("GRPc")
     @Tag("Negative")
     public void testAddUserDuplicateEmail() {
+        log.info("Running testAddUserDuplicateEmail");
         userRepository.save(new User(null, "Existing", "exists@example.com", LocalDate.of(1990, 1, 1)));
 
         UserMessage userMessage = UserMessage.newBuilder()
@@ -106,6 +114,7 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
     @Tag("GRPc")
     @Tag("Negative")
     public void testAddUserDuplicateName() {
+        log.info("Running testAddUserDuplicateName");
         userRepository.save(new User(null, "ExistingUser", "exists@example.com", LocalDate.of(1990, 1, 1)));
 
         UserMessage userMessage = UserMessage.newBuilder()
@@ -127,6 +136,7 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
     @Tag("GRPc")
     @Tag("Negative")
     public void testAddUserInvalidBirthdate() {
+        log.info("Running testAddUserInvalidBirthdate");
         UserMessage userMessage = UserMessage.newBuilder()
                 .setName("User2")
                 .setEmail("u2@example.com")
@@ -143,6 +153,7 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
     @Tag("GRPc")
     @Tag("Positive")
     public void testGetUsers() {
+        log.info("Running testGetUsers");
         userRepository.save(new User(null, "User1", "u1@example.com", LocalDate.of(1990, 1, 1)));
         userRepository.save(new User(null, "User2", "u2@example.com", LocalDate.of(1991, 2, 2)));
 
@@ -155,6 +166,7 @@ public class UserGrpcServiceImplTest extends AbstractPostgresTest {
     @Tag("GRPc")
     @Tag("Positive")
     public void testDeleteUserByNameId() {
+        log.info("Running testDeleteUserByNameId");
         User u1 = userRepository.save(new User(null, "User1", "u1@example.com", LocalDate.of(1990, 1, 1)));
         userRepository.save(new User(null, "User2", "u2@example.com", LocalDate.of(1991, 2, 2)));
 

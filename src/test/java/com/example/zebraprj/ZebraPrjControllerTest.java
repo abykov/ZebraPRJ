@@ -18,6 +18,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.DockerClientFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -56,10 +58,12 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
 
     public static final String DELETEUSER_ENDPOINT = "/deleteuser";
 
+    private static final Logger log = LoggerFactory.getLogger(ZebraPrjControllerTest.class);
+
     @BeforeAll
     static void init() {
         String dockerHostIp = DockerClientFactory.instance().dockerHostIpAddress();
-        System.out.println("Docker host: " + dockerHostIp);
+        log.info("Docker host: {}", dockerHostIp);
     }
 
     // 4. Use @BeforeEach to ensure a clean database state for each test
@@ -67,6 +71,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     void setUp() {
         RestAssured.baseURI = "http://localhost";
         RestAssured.port = port;
+        log.info("Setting up test data on port {}", port);
         userRepository.deleteAll();
         userRepository.save(new User(null, "Alice Smith", "alice@example.com", LocalDate.of(1999, 1, 1)));
         userRepository.save(new User(null, "Bob Johnson", "bob@example.com", LocalDate.of(1994, 2, 15)));
@@ -76,6 +81,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("Check GET /hello returns 200 and 'Hello'")
     @Tag("Positive")
     void testGETHelloSuccess() {
+        log.info("Running GETHelloSuccess");
         ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getBody()).isEqualTo(helloBody);
@@ -85,6 +91,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("Check Content-Type for GET /hello")
     @Tag("Positive")
     void testGETHelloContentType() {
+        log.info("Running GETHelloContentType");
         ResponseEntity<String> response = restTemplate.getForEntity(helloEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(200);
         assertThat(response.getHeaders().getContentType().toString()).hasToString("text/plain;charset=UTF-8");
@@ -94,6 +101,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("Check response time for GET /hello")
     @Tag("Positive")
     void testGETHelloResponseTime() {
+        log.info("Running GETHelloResponseTime");
         long startTime = System.currentTimeMillis();
         restTemplate.getForEntity(helloEndpoint, String.class);
         long elapsedTime = System.currentTimeMillis() - startTime;
@@ -104,6 +112,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("Check GET /invalid returns 404")
     @Tag("Negative")
     void testGETInvalidEndpoint() {
+        log.info("Running GETInvalidEndpoint");
         ResponseEntity<String> response = restTemplate.getForEntity(invalidEndpoint, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(404);
     }
@@ -112,6 +121,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("Check POST /hello returns 405")
     @Tag("Negative")
     void testPOSTHelloMethodNotAllowed() {
+        log.info("Running POSTHelloMethodNotAllowed");
         ResponseEntity<String> response = restTemplate.postForEntity(helloEndpoint, null, String.class);
         assertThat(response.getStatusCode().value()).isEqualTo(405);
     }
@@ -120,6 +130,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("Check GET /users returns 200 and correct data")
     @Tag("Positive")
     void testGETUsersSuccess() {
+        log.info("Running GETUsersSuccess");
         ResponseEntity<List<User>> response = restTemplate.exchange(
                 usersEndpoint,
                 HttpMethod.GET,
@@ -135,6 +146,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("Check POST /users adds a new user")
     @Tag("Positive")
     void testPOSTNewUserSuccess() {
+        log.info("Running POSTNewUserSuccess");
         User newUser = new User(null, "Abraham Lincoln", "Avraam@mail.ru", LocalDate.of(1809, 2, 12));
 
         // We can typically make a POST call here, but since the controller method
@@ -148,6 +160,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("DELETE via GET " + DELETEUSER_ENDPOINT + "/{id} removes the user")
     @Tag("Positive")
     void testDeleteUserByIdGET(){
+        log.info("Running DELETEUserByIdGET");
         //Get ID of first test user (created with @before each)
         Long testUserID = userRepository.findAll().get(0).getId();
         ResponseEntity<Map> response = restTemplate.exchange(
@@ -164,6 +177,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("POST /deleteuser with name removes matching users")
     @Tag("Positive")
     void testDeleteUserByNamePOST(){
+        log.info("Running DELETEUserByNamePOST");
         String testUserName = userRepository.findAll().get(0).getName();
         List<Map<String,Object>> request = Arrays.asList(Map.of("name",testUserName));
         ResponseEntity<Map> response = restTemplate.postForEntity(
@@ -180,6 +194,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("POST /deleteuser non-existing ID")
     @Tag("Negative")
     void testDeleteUserNotExistingIdPOST(){
+        log.info("Running DELETEUserByNamePOST");
         List<Map<String,Object>> request = Arrays.asList(Map.of("id",999));
         ResponseEntity<Map> response = restTemplate.postForEntity(
                 DELETEUSER_ENDPOINT,
@@ -195,6 +210,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("DELETE /users. ID in URL (/users?id=xx)")
     @Tag("Positive")
     void testDeleteUserNonExistingIdInUrlDELETE(){
+        log.info("Running DELETEUserByNamePOST");
         Long testUserID = userRepository.findAll().get(0).getId();
         ResponseEntity<Map> response = restTemplate.exchange(
                 "/users?id=" + testUserID,
@@ -211,6 +227,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("DELETE /users. ID in URL of not existing user (/users?id=xx)")
     @Tag("Negative")
     void testDeleteUserByIdInUrlDELETE(){
+        log.info("Running DELETEUserByNamePOST");
         ResponseEntity<Map> response = restTemplate.exchange(
                 "/users?id=777",
                 HttpMethod.DELETE,
@@ -225,6 +242,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("DELETE /users. ID in body")
     @Tag("Positive")
     void testDeleteUserByIdInBodyDELETE(){
+        log.info("Running DELETEUserByNamePOST");
         Long testUserID = userRepository.findAll().get(0).getId();
         List<Map<String,Object>> request = Arrays.asList(Map.of("id",testUserID));
 
@@ -243,6 +261,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("DELETE /users. Non existing ID in body")
     @Tag("Negative")
     void testDeleteUserNonExistingIdInBodyDELETE(){
+        log.info("Running DELETEUserByNamePOST");
         Long nonExistingUserID = 999L;
         List<Map<String,Object>> request = Arrays.asList(Map.of("id",nonExistingUserID));
 
@@ -263,6 +282,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("GET /crazy. Correct ID in body - deletes user")
     @Tag("Positive")
     void testCrazyGetWithCorrectIdDeletesUser(){
+        log.info("Running CRazyGetWithCorrectIdDeletesUser");
         // Get ID of first test user
         Long testUserId = userRepository.findAll().get(0).getId();
         given()
@@ -281,6 +301,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("GET /crazy. Non-existing ID in body - user not found")
     @Tag("Negative")
     void testCrazyGetWithNonExistingIdUserNotFound() {
+        log.info("Running CRazyGetWithNonExistingIdUser");
         Long nonExistingUserID = 999L;
         given()
                 .contentType(ContentType.JSON)
@@ -296,6 +317,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
         @DisplayName("GET /crazy. Valid username in body - returns user")
         @Tag("Positive")
         void testCrazyGetWithValidUsername(){
+            log.info("Running CRazyGetWithValidUsername");
             String testUserName = userRepository.findAll().get(0).getName();
             var response =
                     given()
@@ -316,6 +338,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("GET /crazy. Non-existing username - user not found")
     @Tag("Negative")
     void testCrazyGetWithNonExistingUsername(){
+        log.info("Running CRazyGetWithNonExistingUsername");
         String testUserName = "NonExistingUser";
         given()
                 .contentType(ContentType.JSON)
@@ -331,6 +354,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("GET /crazy. Empty body - error 400")
     @Tag("Negative")
     void testCrazyGetWithEmptyBody(){
+        log.info("Running CRazyGetWithEmptyBody");
         ResponseEntity<Map> response = restTemplate.exchange(
                 "/crazy",
                 HttpMethod.GET,
@@ -346,6 +370,7 @@ class ZebraPrjControllerTest extends AbstractPostgresTest {
     @DisplayName("GET /crazy. Invalid ID format - error 400")
     @Tag("Negative")
     void testCrazyGetInvalidIdFormat() {
+        log.info("Running CRazyGetWithInvalidIdFormat");
         given()
                 .contentType(ContentType.JSON)
                 .body(Map.of("id", "not-a-number"))
