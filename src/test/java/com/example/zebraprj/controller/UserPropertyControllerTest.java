@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -76,5 +78,31 @@ public class UserPropertyControllerTest {
         assertThat(saved.getFavouriteColour()).isEqualTo("green");
         assertThat(saved.getOrganisation()).isEqualTo("Org");
 
+    }
+
+    @Test
+    @Tag("Positive")
+    @Tag("Mongo")
+    void getUserPropertyByUserId() throws Exception {
+        log.info("Running UserProperty getUserPropertyByUserId");
+        repository.save(new UserProperty("55", "Street", "Org", "red"));
+
+        mockMvc.perform(get("/userproperty").param("userId", "55"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value("55"));
+    }
+
+    @Test
+    @Tag("Positive")
+    @Tag("Mongo")
+    void deleteUserPropertyByUserId() throws Exception {
+        log.info("Running UserProperty deleteUserPropertyByUserId");
+        repository.save(new UserProperty("66", "Main", "OrgState", "blue"));
+
+        mockMvc.perform(delete("/userproperty").param("userId", "66"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("UserProperty with id: 66 deleted successfully"));
+
+        assertThat(repository.existsById("66")).isFalse();
     }
 }

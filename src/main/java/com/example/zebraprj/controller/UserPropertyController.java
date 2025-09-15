@@ -10,14 +10,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Tag(name = "UserProperty", description = "API for managing user properties stored in MongoDB")
@@ -61,4 +61,40 @@ public class UserPropertyController {
         }
     }
 
+    @GetMapping(value = "/userproperty", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get user properties", description = "Return all user properties or one by userId")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User property(ies) retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "User property not found")
+    })
+    public ResponseEntity<?> getUserProperty(@RequestParam(required = false) String userId){
+        log.info("Received request to get user property: {}", userId);
+        if(userId != null){
+            return userPropertyRepository.findById(userId)
+                    .<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "User property with ID " + userId + " not found")));
+        }
+        List<UserProperty> all = userPropertyRepository.findAll();
+        log.info("Found {} user properties", all.size());
+        return ResponseEntity.ok(all);
+    }
+
+    @DeleteMapping(value = "/userproperty", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Delete user property", description = "Delete user property by userId")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User property deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "User property not found")
+    })
+    public ResponseEntity<Map<String, String>> deleteUserProperty(@RequestParam String userId) {
+        log.info("Received request to delete user property with userId: {}", userId);
+        if (!userPropertyRepository.existsById(userId)) {
+            log.warn("UserProperty with userId {} does not exist", userId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).
+                    body(Map.of("error", "UserProperty with id: " + userId + " not found"));
+        }
+        userPropertyRepository.deleteById(userId);
+        log.info("UserProperty with userId {} deleted", userId);
+        return ResponseEntity.ok(Map.of("message", "UserProperty with id: " + userId + " deleted successfully"));
+    }
 }
